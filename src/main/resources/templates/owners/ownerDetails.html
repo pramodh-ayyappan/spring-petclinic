@@ -4,8 +4,8 @@
   th:replace="~{fragments/layout :: layout (~{::body},'owners')}">
 
   <body>
-  
-  
+
+
     <h2>Owner Information</h2>
 
     <div th:if="${message}" class="alert alert-success" id="success-message">
@@ -37,19 +37,35 @@
         <td th:text="*{telephone}"></td>
       </tr>
     </table>
-  
+
     <a th:href="@{__${owner.id}__/edit}" class="btn btn-primary">Edit
       Owner</a>
     <a th:href="@{__${owner.id}__/pets/new}" class="btn btn-primary">Add
       New Pet</a>
-  
+
     <br />
     <br />
+
+    <div class="row mb-3">
+      <div class="col-md-12">
+        <h4>AWS S3 Operations</h4>
+        <form th:action="@{/owners/__${owner.id}__/s3/push}" method="post" style="display: inline-block; margin-right: 10px;">
+          <div class="input-group">
+            <input type="text" class="form-control" name="filename" placeholder="Filename (e.g., owner.json)" value="owner.json" />
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-primary">Push to S3</button>
+            </div>
+          </div>
+        </form>
+        <a class="btn btn-info" th:href="@{/owners/s3/list}">List S3 Files</a>
+      </div>
+    </div>
+
     <br />
     <h2>Pets and Visits</h2>
-  
+
     <table class="table table-striped">
-  
+
       <tr th:each="pet : ${owner.pets}">
         <td valign="top">
           <dl class="dl-horizontal">
@@ -81,7 +97,7 @@
           </table>
         </td>
       </tr>
-  
+
     </table>
     <script>
     // Function to hide the success and error messages after 3 seconds

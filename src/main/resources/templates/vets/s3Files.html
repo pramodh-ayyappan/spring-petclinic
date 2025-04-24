@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+
+<html xmlns:th="https://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout (~{::body},'vets')}">
+
+<body>
+
+<h2>Veterinarians S3 Files</h2>
+
+<div class="row">
+  <div class="col-md-12">
+    <div th:if="${message}" class="alert alert-success" role="alert">
+      <p th:text="${message}">Success message</p>
+    </div>
+    <div th:if="${error}" class="alert alert-danger" role="alert">
+      <p th:text="${error}">Error message</p>
+    </div>
+  </div>
+</div>
+
+<h3>Files in S3 Bucket</h3>
+<table class="table table-striped">
+  <thead>
+  <tr>
+    <th>Filename</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:if="${s3Files.empty}">
+    <td colspan="2">No files found in S3 bucket</td>
+  </tr>
+  <tr th:each="file : ${s3Files}">
+    <td th:text="${file}"></td>
+    <td>
+      <form th:action="@{/vets/s3/remove}" method="post" style="display: inline;">
+        <input type="hidden" name="filename" th:value="${file}" />
+        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+      </form>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<div class="row">
+  <div class="col-md-12">
+    <a class="btn btn-default" th:href="@{/vets.html}">Back to Veterinarians</a>
+  </div>
+</div>
+
+</body>
+</html>

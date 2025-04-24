@@ -51,6 +51,9 @@ class VetControllerTests {
 	@MockitoBean
 	private VetRepository vets;
 
+	@MockitoBean
+	private S3Service s3Service;
+
 	private Vet james() {
 		Vet james = new Vet();
 		james.setFirstName("James");

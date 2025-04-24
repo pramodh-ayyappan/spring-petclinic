@@ -21,6 +21,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.samples.petclinic.vet.S3Service;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -31,7 +32,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import jakarta.validation.Valid;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -50,8 +56,19 @@ class OwnerController {
 
 	private final OwnerRepository owners;
 
-	public OwnerController(OwnerRepository owners) {
+	private final S3Service s3Service;
+
+	private final ObjectMapper objectMapper;
+
+	public OwnerController(OwnerRepository owners, S3Service s3Service) {
 		this.owners = owners;
+		this.s3Service = s3Service;
+		this.objectMapper = new ObjectMapper();
+		// Register the JavaTimeModule to handle Java 8 date/time types
+		this.objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+		// Configure to use ISO-8601 date/time format
+		this.objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,
+				false);
 	}
 
 	@InitBinder
@@ -168,6 +185,104 @@ class OwnerController {
 				"Owner not found with id: " + ownerId + ". Please ensure the ID is correct "));
 		mav.addObject(owner);
 		return mav;
+	}
+
+	/**
+	 * Push owner data to S3 as JSON.
+	 * @param ownerId the ID of the owner to push
+	 * @param filename The filename to use in S3
+	 * @param redirectAttributes For flash attributes
+	 * @return Redirect to owner details page
+	 */
+	@PostMapping("/owners/{ownerId}/s3/push")
+	public String pushOwnerToS3(@PathVariable("ownerId") int ownerId,
+			@RequestParam(defaultValue = "owner.json") String filename, RedirectAttributes redirectAttributes) {
+		try {
+			Optional<Owner> optionalOwner = this.owners.findById(ownerId);
+			Owner owner = optionalOwner.orElseThrow(() -> new IllegalArgumentException(
+					"Owner not found with id: " + ownerId + ". Please ensure the ID is correct "));
+
+			String jsonContent = objectMapper.writeValueAsString(owner);
+
+			boolean success = s3Service.pushJsonToS3(filename, jsonContent);
+			if (success) {
+				redirectAttributes.addFlashAttribute("message", "Successfully pushed owner data to S3");
+			}
+			else {
+				redirectAttributes.addFlashAttribute("error", "Failed to push owner data to S3");
+			}
+		}
+		catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+		}
+		return "redirect:/owners/{ownerId}";
+	}
+
+	/**
+	 * Push all owners data to S3 as JSON.
+	 * @param filename The filename to use in S3
+	 * @param redirectAttributes For flash attributes
+	 * @return Redirect to owners list page
+	 */
+	@PostMapping("/owners/s3/push")
+	public String pushAllOwnersToS3(@RequestParam(defaultValue = "owners.json") String filename,
+			RedirectAttributes redirectAttributes) {
+		try {
+			Owners owners = new Owners();
+			owners.getOwnerList().addAll(this.owners.findAll());
+			String jsonContent = objectMapper.writeValueAsString(owners);
+
+			boolean success = s3Service.pushJsonToS3(filename, jsonContent);
+			if (success) {
+				redirectAttributes.addFlashAttribute("message", "Successfully pushed all owners data to S3");
+			}
+			else {
+				redirectAttributes.addFlashAttribute("error", "Failed to push all owners data to S3");
+			}
+		}
+		catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+		}
+		return "redirect:/owners";
+	}
+
+	/**
+	 * Remove a file from S3.
+	 * @param filename The filename to remove from S3
+	 * @param redirectAttributes For flash attributes
+	 * @return Redirect to S3 files list page
+	 */
+	@PostMapping("/owners/s3/remove")
+	public String removeFromS3(@RequestParam String filename, RedirectAttributes redirectAttributes) {
+		boolean success = s3Service.removeFromS3(filename);
+		if (success) {
+			redirectAttributes.addFlashAttribute("message", "Successfully removed " + filename + " from S3");
+		}
+		else {
+			redirectAttributes.addFlashAttribute("error", "Failed to remove " + filename + " from S3");
+		}
+		return "redirect:/owners/s3/list";
+	}
+
+	/**
+	 * List all files in the S3 bucket.
+	 * @param model The model to add attributes to
+	 * @return The owners S3 files page
+	 */
+	@GetMapping("/owners/s3/list")
+	public String listS3Files(Model model) {
+		List<String> s3Files = s3Service.listFilesFromS3();
+		model.addAttribute("s3Files", s3Files);
+		return "owners/s3Files";
+	}
+
+	/**
+	 * API endpoint to list S3 files.
+	 * @return List of S3 files
+	 */
+	@GetMapping("/api/owners/s3/list")
+	public @ResponseBody List<String> listS3FilesApi() {
+		return s3Service.listFilesFromS3();
 	}
 
 }

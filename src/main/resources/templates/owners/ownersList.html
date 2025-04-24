@@ -6,6 +6,32 @@
 
 <h2 th:text="#{owners}">Owners</h2>
 
+<div class="row">
+  <div class="col-md-12">
+    <div th:if="${message}" class="alert alert-success" role="alert">
+      <p th:text="${message}">Success message</p>
+    </div>
+    <div th:if="${error}" class="alert alert-danger" role="alert">
+      <p th:text="${error}">Error message</p>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-md-12">
+    <h4>AWS S3 Operations</h4>
+    <form th:action="@{/owners/s3/push}" method="post" style="display: inline-block; margin-right: 10px;">
+      <div class="input-group">
+        <input type="text" class="form-control" name="filename" placeholder="Filename (e.g., owners.json)" value="owners.json" />
+        <div class="input-group-append">
+          <button type="submit" class="btn btn-primary">Push All Owners to S3</button>
+        </div>
+      </div>
+    </form>
+    <a class="btn btn-info" th:href="@{/owners/s3/list}">List S3 Files</a>
+  </div>
+</div>
+
 <table id="owners" class="table table-striped">
   <thead>
   <tr>
