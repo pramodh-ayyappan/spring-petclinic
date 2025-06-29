@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { ownerApi } from '@/services/api';
 import { Owner, PagedResponse, CreateOwnerRequest } from '@/types/api';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, Search, Plus, Edit, Trash2 } from 'lucide-react';
 
 export default function OwnersPage() {
   const [owners, setOwners] = useState<PagedResponse<Owner> | null>(null);
@@ -94,12 +96,12 @@ export default function OwnersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neo-gray p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-neo-primary mb-4">Pet Owners</h1>
-          <p className="text-lg text-neo-dark-gray">Manage pet owners and their information</p>
+          <h1 className="text-4xl font-bold text-foreground mb-4">Pet Owners</h1>
+          <p className="text-lg text-muted-foreground">Manage pet owners and their information</p>
         </div>
 
         {/* Search and Create */}
@@ -110,66 +112,82 @@ export default function OwnersPage() {
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
               <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Search by last name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="submit" variant="blue">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    type="text"
+                    placeholder="Search by last name..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button type="submit">
                   Search
                 </Button>
               </form>
               <Button 
                 onClick={() => setShowCreateForm(!showCreateForm)}
-                variant="success"
+                variant={showCreateForm ? "outline" : "default"}
               >
+                <Plus className="h-4 w-4 mr-2" />
                 {showCreateForm ? 'Cancel' : 'Add New Owner'}
               </Button>
             </div>
 
             {/* Create Form */}
             {showCreateForm && (
-              <Card variant="green" className="mt-4">
+              <Card className="mt-4 border-primary/20">
                 <CardHeader>
                   <CardTitle>Create New Owner</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleCreateOwner} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                      label="First Name"
-                      value={newOwner.firstName}
-                      onChange={(e) => setNewOwner({...newOwner, firstName: e.target.value})}
-                      required
-                    />
-                    <Input
-                      label="Last Name"
-                      value={newOwner.lastName}
-                      onChange={(e) => setNewOwner({...newOwner, lastName: e.target.value})}
-                      required
-                    />
-                    <Input
-                      label="Address"
-                      value={newOwner.address}
-                      onChange={(e) => setNewOwner({...newOwner, address: e.target.value})}
-                      required
-                    />
-                    <Input
-                      label="City"
-                      value={newOwner.city}
-                      onChange={(e) => setNewOwner({...newOwner, city: e.target.value})}
-                      required
-                    />
-                    <Input
-                      label="Telephone"
-                      value={newOwner.telephone}
-                      onChange={(e) => setNewOwner({...newOwner, telephone: e.target.value})}
-                      required
-                    />
-                    <div className="flex gap-2">
-                      <Button type="submit" variant="success">Create Owner</Button>
-                      <Button type="button" onClick={() => setShowCreateForm(false)}>Cancel</Button>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">First Name</label>
+                      <Input
+                        value={newOwner.firstName}
+                        onChange={(e) => setNewOwner({...newOwner, firstName: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Last Name</label>
+                      <Input
+                        value={newOwner.lastName}
+                        onChange={(e) => setNewOwner({...newOwner, lastName: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Address</label>
+                      <Input
+                        value={newOwner.address}
+                        onChange={(e) => setNewOwner({...newOwner, address: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">City</label>
+                      <Input
+                        value={newOwner.city}
+                        onChange={(e) => setNewOwner({...newOwner, city: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Telephone</label>
+                      <Input
+                        value={newOwner.telephone}
+                        onChange={(e) => setNewOwner({...newOwner, telephone: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2 md:col-span-2">
+                      <Button type="submit">Create Owner</Button>
+                      <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                        Cancel
+                      </Button>
                     </div>
                   </form>
                 </CardContent>
@@ -180,97 +198,129 @@ export default function OwnersPage() {
 
         {/* Error Message */}
         {error && (
-          <Card variant="accent" className="mb-6">
-            <CardContent>
-              <p className="text-neo-secondary font-bold">{error}</p>
-            </CardContent>
-          </Card>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {/* Loading */}
         {loading ? (
           <Card>
-            <CardContent>
-              <p className="text-center text-xl font-bold">Loading owners...</p>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="ml-4 text-lg">Loading owners...</p>
+              </div>
             </CardContent>
           </Card>
         ) : (
           <>
             {/* Owners List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-              {owners?.content.map((owner) => (
-                <Card key={owner.id} variant="default">
-                  <CardHeader>
-                    <CardTitle>{owner.firstName} {owner.lastName}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {editingOwner?.id === owner.id ? (
-                      <form onSubmit={handleUpdateOwner} className="space-y-3">
-                        <Input
-                          value={editingOwner.firstName}
-                          onChange={(e) => setEditingOwner({...editingOwner, firstName: e.target.value})}
-                          placeholder="First Name"
-                        />
-                        <Input
-                          value={editingOwner.lastName}
-                          onChange={(e) => setEditingOwner({...editingOwner, lastName: e.target.value})}
-                          placeholder="Last Name"
-                        />
-                        <Input
-                          value={editingOwner.address}
-                          onChange={(e) => setEditingOwner({...editingOwner, address: e.target.value})}
-                          placeholder="Address"
-                        />
-                        <Input
-                          value={editingOwner.city}
-                          onChange={(e) => setEditingOwner({...editingOwner, city: e.target.value})}
-                          placeholder="City"
-                        />
-                        <Input
-                          value={editingOwner.telephone}
-                          onChange={(e) => setEditingOwner({...editingOwner, telephone: e.target.value})}
-                          placeholder="Telephone"
-                        />
-                        <div className="flex gap-2">
-                          <Button type="submit" size="sm" variant="success">Save</Button>
-                          <Button type="button" size="sm" onClick={() => setEditingOwner(null)}>Cancel</Button>
+              {owners?.content?.map((owner) => (
+                <Card key={owner.id} className="hover:shadow-lg transition-shadow">
+                  {editingOwner?.id === owner.id ? (
+                    // Edit Form
+                    <form onSubmit={handleUpdateOwner}>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Edit Owner</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">First Name</label>
+                          <Input
+                            value={editingOwner.firstName}
+                            onChange={(e) => setEditingOwner({...editingOwner, firstName: e.target.value})}
+                            required
+                          />
                         </div>
-                      </form>
-                    ) : (
-                      <div className="space-y-2">
-                        <p><strong>Address:</strong> {owner.address}</p>
-                        <p><strong>City:</strong> {owner.city}</p>
-                        <p><strong>Phone:</strong> {owner.telephone}</p>
-                        {owner.pets && owner.pets.length > 0 && (
-                          <div>
-                            <strong>Pets:</strong>
-                            <ul className="ml-4 mt-1">
-                              {owner.pets.map((pet) => (
-                                <li key={pet.id}>• {pet.name} ({pet.type.name})</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                  {editingOwner?.id !== owner.id && (
-                    <CardFooter>
-                      <Button 
-                        size="sm" 
-                        variant="blue"
-                        onClick={() => setEditingOwner(owner)}
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive"
-                        onClick={() => handleDeleteOwner(owner.id)}
-                      >
-                        Delete
-                      </Button>
-                    </CardFooter>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Last Name</label>
+                          <Input
+                            value={editingOwner.lastName}
+                            onChange={(e) => setEditingOwner({...editingOwner, lastName: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Address</label>
+                          <Input
+                            value={editingOwner.address}
+                            onChange={(e) => setEditingOwner({...editingOwner, address: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">City</label>
+                          <Input
+                            value={editingOwner.city}
+                            onChange={(e) => setEditingOwner({...editingOwner, city: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Telephone</label>
+                          <Input
+                            value={editingOwner.telephone}
+                            onChange={(e) => setEditingOwner({...editingOwner, telephone: e.target.value})}
+                            required
+                          />
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex gap-2">
+                        <Button type="submit" size="sm">Save</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => setEditingOwner(null)}>
+                          Cancel
+                        </Button>
+                      </CardFooter>
+                    </form>
+                  ) : (
+                    // Display Mode
+                    <>
+                      <CardHeader>
+                        <CardTitle className="text-lg">
+                          {owner.firstName} {owner.lastName}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 text-sm">
+                          <p><span className="font-medium">Address:</span> {owner.address}</p>
+                          <p><span className="font-medium">City:</span> {owner.city}</p>
+                          <p><span className="font-medium">Phone:</span> {owner.telephone}</p>
+                          {owner.pets && owner.pets.length > 0 && (
+                            <div>
+                              <span className="font-medium">Pets:</span>
+                              <ul className="ml-4 mt-1">
+                                {owner.pets.map((pet) => (
+                                  <li key={pet.id} className="text-muted-foreground">
+                                    • {pet.name} ({pet.type?.name})
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setEditingOwner(owner)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteOwner(owner.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </CardFooter>
+                    </>
                   )}
                 </Card>
               ))}
@@ -279,23 +329,23 @@ export default function OwnersPage() {
             {/* Pagination */}
             {owners && owners.totalPages > 1 && (
               <Card>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="flex justify-between items-center">
-                    <div className="text-sm text-neo-dark-gray">
-                      Showing {owners.content.length} of {owners.totalElements} owners
-                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Page {owners.number + 1} of {owners.totalPages} 
+                      ({owners.totalElements} total owners)
+                    </p>
                     <div className="flex gap-2">
                       <Button
+                        variant="outline"
                         size="sm"
                         disabled={owners.first}
                         onClick={() => setCurrentPage(currentPage - 1)}
                       >
                         Previous
                       </Button>
-                      <span className="px-4 py-2 font-bold">
-                        Page {owners.page + 1} of {owners.totalPages}
-                      </span>
                       <Button
+                        variant="outline"
                         size="sm"
                         disabled={owners.last}
                         onClick={() => setCurrentPage(currentPage + 1)}
@@ -303,6 +353,22 @@ export default function OwnersPage() {
                         Next
                       </Button>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No Results */}
+            {owners && owners.content.length === 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <p className="text-lg text-muted-foreground">No owners found.</p>
+                    {searchTerm && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Try adjusting your search terms or add a new owner.
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

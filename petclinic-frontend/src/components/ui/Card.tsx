@@ -1,57 +1,72 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import * as React from "react"
 
-interface CardProps {
-  children: React.ReactNode;
-  className?: string;
-  variant?: 'default' | 'accent' | 'blue' | 'green' | 'yellow' | 'pink';
-}
+import { cn } from "@/lib/utils"
 
-const Card = ({ children, className, variant = 'default' }: CardProps) => {
-  const variants = {
-    default: 'bg-neo-secondary border-neo-primary',
-    accent: 'bg-neo-accent border-neo-primary text-neo-secondary',
-    blue: 'bg-neo-blue border-neo-primary text-neo-secondary',
-    green: 'bg-neo-green border-neo-primary text-neo-primary',
-    yellow: 'bg-neo-yellow border-neo-primary text-neo-primary',
-    pink: 'bg-neo-pink border-neo-primary text-neo-secondary',
-  };
-
+function Card({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        'border-3 shadow-neo p-6',
-        variants[variant],
+        "rounded-lg border bg-card text-card-foreground shadow-sm",
         className
       )}
-    >
-      {children}
-    </div>
-  );
-};
+      {...props}
+    />
+  )
+}
 
-const CardHeader = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn('mb-4', className)}>
-    {children}
-  </div>
-);
+function CardHeader({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+  )
+}
 
-const CardTitle = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <h3 className={cn('text-2xl font-bold', className)}>
-    {children}
-  </h3>
-);
+function CardTitle({
+  className,
+  ...props
+}: React.ComponentProps<"h3">) {
+  return (
+    <h3
+      className={cn(
+        "text-2xl font-semibold leading-none tracking-tight",
+        className
+      )}
+      {...props}
+    />
+  )
+}
 
-const CardContent = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn('space-y-4', className)}>
-    {children}
-  </div>
-);
+function CardDescription({
+  className,
+  ...props
+}: React.ComponentProps<"p">) {
+  return (
+    <p
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
 
-const CardFooter = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn('mt-6 flex gap-2', className)}>
-    {children}
-  </div>
-);
+function CardContent({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return <div className={cn("p-6 pt-0", className)} {...props} />
+}
 
-export { Card, CardHeader, CardTitle, CardContent, CardFooter }; 
+function CardFooter({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("flex items-center p-6 pt-0", className)} {...props} />
+  )
+}
+
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } 

@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { vetApi } from '@/services/api';
 import { Vet, PagedResponse } from '@/types/api';
-import { Button } from '@/components/ui/Button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, Users, Award, Stethoscope } from 'lucide-react';
 
 export default function VetsPage() {
   const [vets, setVets] = useState<PagedResponse<Vet> | null>(null);
@@ -37,42 +40,41 @@ export default function VetsPage() {
     fetchVets(currentPage);
   }, [currentPage, viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getSpecialtyColor = (specialty: string) => {
-    const colors = {
-      radiology: 'bg-neo-blue text-neo-secondary',
-      surgery: 'bg-neo-red text-neo-secondary',
-      dentistry: 'bg-neo-green text-neo-primary',
-      cardiology: 'bg-neo-purple text-neo-secondary',
-      neurology: 'bg-neo-yellow text-neo-primary',
-      default: 'bg-neo-accent text-neo-secondary'
+  const getSpecialtyVariant = (specialty: string) => {
+    const variants = {
+      radiology: 'default',
+      surgery: 'destructive',
+      dentistry: 'secondary',
+      cardiology: 'outline',
+      neurology: 'default',
     };
-    return colors[specialty.toLowerCase() as keyof typeof colors] || colors.default;
+    return variants[specialty.toLowerCase() as keyof typeof variants] || 'default';
   };
 
   const displayVets = viewMode === 'all' ? allVets : vets?.content;
 
   return (
-    <div className="min-h-screen bg-neo-gray p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-neo-primary mb-4">Veterinarians</h1>
-          <p className="text-lg text-neo-dark-gray">Meet our expert veterinary team</p>
+          <h1 className="text-4xl font-bold text-foreground mb-4">Veterinarians</h1>
+          <p className="text-lg text-muted-foreground">Meet our expert veterinary team</p>
         </div>
 
         {/* View Mode Toggle */}
         <Card className="mb-6">
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="flex gap-4 items-center">
-              <span className="font-bold text-neo-primary">View Mode:</span>
+              <span className="font-medium text-foreground">View Mode:</span>
               <Button
-                variant={viewMode === 'all' ? 'blue' : 'default'}
+                variant={viewMode === 'all' ? 'default' : 'outline'}
                 onClick={() => setViewMode('all')}
               >
                 Show All
               </Button>
               <Button
-                variant={viewMode === 'paginated' ? 'blue' : 'default'}
+                variant={viewMode === 'paginated' ? 'default' : 'outline'}
                 onClick={() => setViewMode('paginated')}
               >
                 Paginated View
@@ -83,18 +85,20 @@ export default function VetsPage() {
 
         {/* Error Message */}
         {error && (
-          <Card variant="accent" className="mb-6">
-            <CardContent>
-              <p className="text-neo-secondary font-bold">{error}</p>
-            </CardContent>
-          </Card>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {/* Loading */}
         {loading ? (
           <Card>
-            <CardContent>
-              <p className="text-center text-xl font-bold">Loading veterinarians...</p>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="ml-4 text-lg">Loading veterinarians...</p>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -102,34 +106,38 @@ export default function VetsPage() {
             {/* Vets Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
               {displayVets?.map((vet) => (
-                <Card key={vet.id} variant="default">
+                <Card key={vet.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <CardTitle className="text-2xl">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Stethoscope className="h-5 w-5 text-primary" />
                       Dr. {vet.firstName} {vet.lastName}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-bold text-neo-primary mb-2">Specialties:</h4>
+                        <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                          <Award className="h-4 w-4" />
+                          Specialties:
+                        </h4>
                         {vet.specialties && vet.specialties.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {vet.specialties.map((specialty) => (
-                              <span
+                              <Badge
                                 key={specialty.id}
-                                className={`px-3 py-1 text-sm font-bold border-2 border-neo-primary ${getSpecialtyColor(specialty.name)}`}
+                                variant={getSpecialtyVariant(specialty.name) as any}
                               >
                                 {specialty.name}
-                              </span>
+                              </Badge>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-neo-dark-gray italic">General Practice</span>
+                          <Badge variant="secondary">General Practice</Badge>
                         )}
                       </div>
                       
-                      <div className="pt-2 border-t-2 border-neo-primary">
-                        <p className="text-sm text-neo-dark-gray">
+                      <div className="pt-2 border-t">
+                        <p className="text-sm text-muted-foreground">
                           <strong>Vet ID:</strong> {vet.id}
                         </p>
                       </div>
@@ -142,23 +150,23 @@ export default function VetsPage() {
             {/* Pagination for paginated view */}
             {viewMode === 'paginated' && vets && vets.totalPages > 1 && (
               <Card>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="flex justify-between items-center">
-                    <div className="text-sm text-neo-dark-gray">
-                      Showing {vets.content.length} of {vets.totalElements} veterinarians
-                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Page {vets.number + 1} of {vets.totalPages} 
+                      ({vets.totalElements} total veterinarians)
+                    </p>
                     <div className="flex gap-2">
                       <Button
+                        variant="outline"
                         size="sm"
                         disabled={vets.first}
                         onClick={() => setCurrentPage(currentPage - 1)}
                       >
                         Previous
                       </Button>
-                      <span className="px-4 py-2 font-bold">
-                        Page {vets.page + 1} of {vets.totalPages}
-                      </span>
                       <Button
+                        variant="outline"
                         size="sm"
                         disabled={vets.last}
                         onClick={() => setCurrentPage(currentPage + 1)}
@@ -172,61 +180,44 @@ export default function VetsPage() {
             )}
 
             {/* Stats Card */}
-            <Card variant="blue" className="mt-6">
+            <Card className="mt-6">
               <CardHeader>
-                <CardTitle>Veterinary Team Statistics</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Veterinary Team Statistics
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-3xl font-bold text-neo-secondary">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-3xl font-bold text-primary">
                       {displayVets?.length || 0}
                     </p>
-                    <p className="text-neo-secondary">Total Veterinarians</p>
+                    <p className="text-muted-foreground">Total Veterinarians</p>
                   </div>
-                  <div>
-                    <p className="text-3xl font-bold text-neo-secondary">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-3xl font-bold text-primary">
                       {displayVets?.reduce((acc, vet) => acc + (vet.specialties?.length || 0), 0) || 0}
                     </p>
-                    <p className="text-neo-secondary">Total Specialties</p>
+                    <p className="text-muted-foreground">Total Specialties</p>
                   </div>
-                  <div>
-                    <p className="text-3xl font-bold text-neo-secondary">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-3xl font-bold text-primary">
                       {displayVets?.filter(vet => vet.specialties && vet.specialties.length > 0).length || 0}
                     </p>
-                    <p className="text-neo-secondary">Specialists</p>
+                    <p className="text-muted-foreground">Specialists</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Available Specialties */}
-            {displayVets && displayVets.length > 0 && (
-              <Card variant="green" className="mt-6">
-                <CardHeader>
-                  <CardTitle>Available Specialties</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(
-                      new Set(
-                        displayVets
-                          .flatMap(vet => vet.specialties || [])
-                          .map(specialty => specialty.name)
-                      )
-                    ).map((specialtyName) => (
-                      <span
-                        key={specialtyName}
-                        className={`px-4 py-2 font-bold border-2 border-neo-primary ${getSpecialtyColor(specialtyName)}`}
-                      >
-                        {specialtyName}
-                      </span>
-                    ))}
-                    {displayVets.some(vet => !vet.specialties || vet.specialties.length === 0) && (
-                      <span className="px-4 py-2 font-bold border-2 border-neo-primary bg-neo-secondary text-neo-primary">
-                        General Practice
-                      </span>
-                    )}
+            {/* No Results */}
+            {displayVets && displayVets.length === 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <Stethoscope className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg text-muted-foreground">No veterinarians found.</p>
                   </div>
                 </CardContent>
               </Card>
