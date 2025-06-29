@@ -284,7 +284,7 @@ export default function VetsPage() {
 
       {/* Vets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {displayVets.map((vet, index) => {
+        {displayVets.map((vet) => {
           const isFromJson = vet.id > 1000;
           const cardColor = isFromJson ? 'border-facets-purple/20' : 'border-facets-teal/20';
           const nameColor = isFromJson ? 'text-facets-purple' : 'text-facets-teal';

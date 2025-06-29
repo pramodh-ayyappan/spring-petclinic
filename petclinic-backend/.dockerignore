@@ -8,6 +8,9 @@ target/
 *.iml
 *.ipr
 *.iws
+.settings/
+.project
+.classpath
 
 # OS files
 .DS_Store
@@ -44,4 +47,13 @@ failsafe-reports/
 .springBeans
 
 # JVM crash logs
-hs_err_pid* 
+hs_err_pid*
+
+# Large directories that shouldn't be in Docker context
+../petclinic-frontend/
+../node_modules/
+../.git/
+../docker-compose.yml
+../nginx.conf
+../exports/
+../*.md 

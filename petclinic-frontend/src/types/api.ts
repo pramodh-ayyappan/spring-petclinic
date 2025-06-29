@@ -100,7 +100,7 @@ export interface LocalFilesResponse {
 export interface ApiResponse {
   success: boolean;
   message: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 export interface AdminInfo {

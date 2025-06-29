@@ -29,7 +29,9 @@ export default function OwnersPage() {
   const fetchOwners = async (page: number = 0, search?: string) => {
     try {
       setLoading(true);
-      const data = await ownerApi.getAll(page, 10, search);
+      const data = search 
+        ? await ownerApi.search(search, page, 10)
+        : await ownerApi.getAll(page, 10);
       setOwners(data);
       setError(null);
     } catch (err) {

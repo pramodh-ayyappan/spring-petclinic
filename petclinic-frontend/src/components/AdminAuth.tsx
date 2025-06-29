@@ -16,7 +16,7 @@ interface AdminAuthProps {
 export default function AdminAuth({ children }: AdminAuthProps) {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [credentials, setCredentials] = useState<{ username: string; password: string } | null>(null);
-  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
+  const [, setAdminInfo] = useState<AdminInfo | null>(null);
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,12 +48,18 @@ export default function AdminAuth({ children }: AdminAuthProps) {
       setCredentials(formData);
       setIsLoginOpen(false);
       setFormData(prev => ({ ...prev, password: '' })); // Clear password from form
-    } catch (error: any) {
-      if (error?.response?.status === 401) {
-        setError('Invalid username or password');
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { status: number } };
+        if (axiosError.response?.status === 401) {
+          setError('Invalid username or password');
+        } else {
+          setError('Authentication failed. Please try again.');
+        }
       } else {
         setError('Authentication failed. Please try again.');
       }
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }

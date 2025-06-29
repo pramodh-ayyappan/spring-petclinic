@@ -42,4 +42,13 @@ Dockerfile
 coverage
 
 # Misc
-.eslintcache 
+.eslintcache
+
+# Large directories that shouldn't be in Docker context
+../petclinic-backend/
+../exports/
+../.git/
+../docker-compose.yml
+../nginx.conf
+../*.md
+frontend.log 

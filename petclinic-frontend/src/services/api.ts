@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Owner, Vet, PagedResponse, CreateOwnerRequest, S3FileInfo, S3FilesResponse, S3DetailedFilesResponse, LocalFilesResponse, ApiResponse, AdminInfo } from '@/types/api';
+import { Owner, Vet, PagedResponse, CreateOwnerRequest, S3FilesResponse, S3DetailedFilesResponse, LocalFilesResponse, ApiResponse, AdminInfo } from '@/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 

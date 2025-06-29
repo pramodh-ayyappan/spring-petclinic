@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,21 +15,12 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from '@/components/ui/dialog';
 import { s3Api } from '@/services/api';
 import { 
   S3FilesResponse, 
   S3DetailedFilesResponse, 
-  LocalFilesResponse, 
-  ApiResponse, 
-  S3FileInfo 
+  LocalFilesResponse,
+  S3FileInfo
 } from '@/types/api';
 import AdminAuth from '@/components/AdminAuth';
 
@@ -60,12 +51,12 @@ function S3ManagementPageContent({
   });
 
   // Utility functions
-  const addAlert = (type: 'success' | 'error', message: string) => {
+  const addAlert = useCallback((type: 'success' | 'error', message: string) => {
     setAlerts(prev => [...prev, { type, message }]);
     setTimeout(() => {
       setAlerts(prev => prev.slice(1));
     }, 5000);
-  };
+  }, []);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -80,7 +71,7 @@ function S3ManagementPageContent({
   };
 
   // Data loading functions
-  const loadS3Files = async () => {
+  const loadS3Files = useCallback(async () => {
     try {
       setLoading(true);
       const response = await s3Api.listFiles();
@@ -91,9 +82,9 @@ function S3ManagementPageContent({
     } finally {
       setLoading(false);
     }
-  };
+  }, [addAlert]);
 
-  const loadS3DetailedFiles = async () => {
+  const loadS3DetailedFiles = useCallback(async () => {
     try {
       setLoading(true);
       const response = await s3Api.listFilesDetailed();
@@ -104,9 +95,9 @@ function S3ManagementPageContent({
     } finally {
       setLoading(false);
     }
-  };
+  }, [addAlert]);
 
-  const loadLocalFiles = async () => {
+  const loadLocalFiles = useCallback(async () => {
     try {
       setLoading(true);
       const response = await s3Api.listLocalFiles();
@@ -117,7 +108,7 @@ function S3ManagementPageContent({
     } finally {
       setLoading(false);
     }
-  };
+  }, [addAlert]);
 
   // Action functions
   const handleDeleteS3File = async (filename: string) => {
@@ -270,7 +261,7 @@ function S3ManagementPageContent({
       loadS3DetailedFiles();
       loadLocalFiles();
     }
-  }, [credentials]);
+  }, [credentials, loadS3Files, loadS3DetailedFiles, loadLocalFiles]);
 
   // Show login prompt if not authenticated
   if (!credentials) {
