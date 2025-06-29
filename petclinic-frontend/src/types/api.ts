@@ -51,6 +51,7 @@ export interface PagedResponse<T> {
   totalPages: number;
   first: boolean;
   last: boolean;
+  number: number;
 }
 
 export interface CreateOwnerRequest {

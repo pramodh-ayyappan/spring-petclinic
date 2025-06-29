@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Users, Award, Stethoscope } from 'lucide-react';
+import { AlertCircle, Users, Award, Stethoscope, Database, FileText, Merge } from 'lucide-react';
+
+type DataSource = 'merged' | 'database' | 'additional';
 
 export default function VetsPage() {
   const [vets, setVets] = useState<PagedResponse<Vet> | null>(null);
@@ -16,11 +18,39 @@ export default function VetsPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [viewMode, setViewMode] = useState<'paged' | 'all'>('paged');
+  const [dataSource, setDataSource] = useState<DataSource>('merged');
 
-  const fetchVets = async (page: number = 0) => {
+  const fetchVets = async (page: number = 0, source: DataSource = 'merged') => {
     try {
       setLoading(true);
-      const data = await vetApi.getAll(page, 6);
+      let data: PagedResponse<Vet>;
+      
+      switch (source) {
+        case 'database':
+          data = await vetApi.getDatabaseOnly(page, 6);
+          break;
+        case 'additional':
+          // For additional vets, get all and manually paginate
+          const additionalVets = await vetApi.getAdditionalOnly();
+          const startIndex = page * 6;
+          const endIndex = startIndex + 6;
+          data = {
+            content: additionalVets.slice(startIndex, endIndex),
+            page,
+            size: 6,
+            totalElements: additionalVets.length,
+            totalPages: Math.ceil(additionalVets.length / 6),
+            first: page === 0,
+            last: endIndex >= additionalVets.length,
+            number: page
+          };
+          break;
+        case 'merged':
+        default:
+          data = await vetApi.getAll(page, 6, 'merged');
+          break;
+      }
+      
       setVets(data);
       setError(null);
     } catch (err) {
@@ -31,10 +61,25 @@ export default function VetsPage() {
     }
   };
 
-  const fetchAllVets = async () => {
+  const fetchAllVets = async (source: DataSource = 'merged') => {
     try {
       setLoading(true);
-      const data = await vetApi.getAllVets();
+      let data: Vet[];
+      
+      switch (source) {
+        case 'database':
+          const backendData = await vetApi.getDatabaseOnly(0, 1000);
+          data = backendData.content;
+          break;
+        case 'additional':
+          data = await vetApi.getAdditionalOnly();
+          break;
+        case 'merged':
+        default:
+          data = await vetApi.getAllVets('merged');
+          break;
+      }
+      
       setAllVets(data);
       setError(null);
     } catch (err) {
@@ -47,222 +92,300 @@ export default function VetsPage() {
 
   useEffect(() => {
     if (viewMode === 'paged') {
-      fetchVets(currentPage);
+      fetchVets(currentPage, dataSource);
     } else {
-      fetchAllVets();
+      fetchAllVets(dataSource);
     }
-  }, [currentPage, viewMode]);
+  }, [currentPage, viewMode, dataSource]);
 
   const displayVets = viewMode === 'paged' ? vets?.content || [] : allVets || [];
 
-  return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Veterinary <span className="text-facets-purple">Specialists</span>
-          </h1>
-          <p className="text-lg text-muted-foreground">Meet our qualified veterinary team</p>
-        </div>
+  const getDataSourceInfo = () => {
+    switch (dataSource) {
+      case 'database':
+        return {
+          icon: Database,
+          label: 'Backend Only',
+          description: 'Data from Spring Boot API',
+          color: 'text-facets-teal'
+        };
+      case 'additional':
+        return {
+          icon: FileText,
+          label: 'JSON Only',
+          description: 'Data from additional-vets.json',
+          color: 'text-facets-purple'
+        };
+      case 'merged':
+      default:
+        return {
+          icon: Merge,
+          label: 'Merged Data',
+          description: 'Backend + JSON combined',
+          color: 'text-orange-500'
+        };
+    }
+  };
 
-        {/* View Controls */}
-        <Card className="mb-6 border-l-4 border-l-facets-purple">
-          <CardHeader>
-            <CardTitle className="text-facets-purple flex items-center gap-2">
-              <Stethoscope className="h-5 w-5" />
-              View Options
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === 'paged' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setViewMode('paged');
-                    setCurrentPage(0);
-                  }}
-                  className={viewMode === 'paged' ? "bg-facets-purple hover:bg-facets-purple/90 text-white" : "border-facets-purple text-facets-purple hover:bg-facets-purple hover:text-white"}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Paged View
-                </Button>
-                <Button
-                  variant={viewMode === 'all' ? 'default' : 'outline'}
-                  onClick={() => setViewMode('all')}
-                  className={viewMode === 'all' ? "bg-facets-teal hover:bg-facets-teal/90 text-white" : "border-facets-teal text-facets-teal hover:bg-facets-teal hover:text-white"}
-                >
-                  <Award className="h-4 w-4 mr-2" />
-                  All Specialists
-                </Button>
+  const sourceInfo = getDataSourceInfo();
+  const SourceIcon = sourceInfo.icon;
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-facets-teal"></div>
+          <span className="ml-2 text-facets-teal">Loading veterinarians...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            {error}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const totalVets = viewMode === 'paged' ? vets?.totalElements || 0 : allVets?.length || 0;
+  const additionalVetsCount = displayVets.filter(vet => vet.id > 1000).length;
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold gradient-facets bg-clip-text text-transparent mb-4">
+          Veterinarians Directory
+        </h1>
+        <p className="text-xl text-gray-600">
+          Our expert veterinary team providing comprehensive pet care
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="border-l-4 border-l-facets-teal bg-gradient-to-r from-facets-teal/5 to-transparent">
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-facets-teal mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Veterinarians</p>
+                <p className="text-2xl font-bold text-gray-900">{totalVets}</p>
               </div>
-              
-              {viewMode === 'paged' && vets && (
-                <div className="text-sm text-muted-foreground">
-                  Showing {vets.content.length} of {vets.totalElements} vets
-                </div>
-              )}
-              
-              {viewMode === 'all' && allVets && (
-                <div className="text-sm text-muted-foreground">
-                  Showing all {allVets.length} veterinary specialists
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Error Message */}
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Loading */}
-        {loading ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-facets-purple"></div>
-                <p className="ml-4 text-lg">Loading veterinarians...</p>
+        <Card className="border-l-4 border-l-facets-purple bg-gradient-to-r from-facets-purple/5 to-transparent">
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <FileText className="h-8 w-8 text-facets-purple mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-600">From JSON Data</p>
+                <p className="text-2xl font-bold text-gray-900">{additionalVetsCount}</p>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {/* Vets Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-              {displayVets.map((vet, index) => (
-                <Card key={vet.id} className={`hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-l-4 ${index % 2 === 0 ? 'border-l-facets-purple' : 'border-l-facets-teal'}`}>
-                  <CardHeader>
-                    <CardTitle className={`text-lg ${index % 2 === 0 ? 'text-facets-purple' : 'text-facets-teal'}`}>
-                      Dr. {vet.firstName} {vet.lastName}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {vet.specialties && vet.specialties.length > 0 ? (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Specialties:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {vet.specialties.map((specialty, idx) => (
-                              <Badge 
-                                key={specialty.id} 
-                                variant="secondary"
-                                className={`${
-                                  idx % 2 === 0 
-                                    ? 'bg-facets-purple/10 text-facets-purple border-facets-purple/20' 
-                                    : 'bg-facets-teal/10 text-facets-teal border-facets-teal/20'
-                                } border`}
-                              >
-                                {specialty.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-sm text-muted-foreground italic">
-                          General Practice
-                        </div>
-                      )}
-                      
-                      <div className="pt-2 border-t">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Vet ID: {vet.id}</span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            index % 2 === 0 
-                              ? 'bg-facets-purple/10 text-facets-purple' 
-                              : 'bg-facets-teal/10 text-facets-teal'
-                          }`}>
-                            Available
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-500/5 to-transparent">
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Award className="h-8 w-8 text-orange-500 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-600">Specialties</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {displayVets.reduce((acc, vet) => acc + (vet.specialties?.length || 0), 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Controls */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <SourceIcon className={`h-5 w-5 mr-2 ${sourceInfo.color}`} />
+            Data Source & View Options
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Data Source Selection */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Data Source</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'merged', label: 'Merged Data', icon: Merge, color: 'text-orange-500' },
+                  { value: 'database', label: 'Backend Only', icon: Database, color: 'text-facets-teal' },
+                  { value: 'additional', label: 'JSON Only', icon: FileText, color: 'text-facets-purple' }
+                ].map((source) => {
+                  const Icon = source.icon;
+                  return (
+                    <Button
+                      key={source.value}
+                      variant={dataSource === source.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setDataSource(source.value as DataSource)}
+                      className={dataSource === source.value ? 
+                        "bg-facets-teal hover:bg-facets-teal/90" : 
+                        "hover:bg-gray-100"
+                      }
+                    >
+                      <Icon className={`h-4 w-4 mr-1 ${source.color}`} />
+                      {source.label}
+                    </Button>
+                  );
+                })}
+              </div>
+              <p className="text-sm text-gray-500 mt-1">{sourceInfo.description}</p>
             </div>
 
-            {/* Pagination for Paged View */}
-            {viewMode === 'paged' && vets && vets.totalPages > 1 && (
-              <Card className="border-l-4 border-l-facets-purple">
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm text-muted-foreground">
-                      Page {vets.number + 1} of {vets.totalPages}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={vets.first}
-                        onClick={() => setCurrentPage(currentPage - 1)}
-                        className="border-facets-purple text-facets-purple hover:bg-facets-purple hover:text-white"
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={vets.last}
-                        onClick={() => setCurrentPage(currentPage + 1)}
-                        className="border-facets-purple text-facets-purple hover:bg-facets-purple hover:text-white"
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* View Mode Selection */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">View Mode</label>
+              <div className="flex gap-2">
+                <Button
+                  variant={viewMode === 'paged' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode('paged')}
+                  className={viewMode === 'paged' ? 
+                    "bg-facets-purple hover:bg-facets-purple/90" : 
+                    "hover:bg-gray-100"
+                  }
+                >
+                  Paginated View
+                </Button>
+                <Button
+                  variant={viewMode === 'all' ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode('all')}
+                  className={viewMode === 'all' ? 
+                    "bg-facets-purple hover:bg-facets-purple/90" : 
+                    "hover:bg-gray-100"
+                  }
+                >
+                  Show All
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* No Results */}
-            {displayVets.length === 0 && (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-8">
-                    <Stethoscope className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-lg text-muted-foreground">No veterinarians found.</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Please check back later or contact administration.
-                    </p>
+      {/* Vets Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {displayVets.map((vet, index) => {
+          const isFromJson = vet.id > 1000;
+          const cardColor = isFromJson ? 'border-facets-purple/20' : 'border-facets-teal/20';
+          const nameColor = isFromJson ? 'text-facets-purple' : 'text-facets-teal';
+          
+          return (
+            <Card key={vet.id} className={`hover:shadow-lg transition-shadow duration-200 ${cardColor}`}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className={`text-lg ${nameColor}`}>
+                    Dr. {vet.firstName} {vet.lastName}
+                  </CardTitle>
+                  <Stethoscope className={`h-5 w-5 ${isFromJson ? 'text-facets-purple' : 'text-facets-teal'}`} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-2">Specialties:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {vet.specialties && vet.specialties.length > 0 ? (
+                        vet.specialties.map((specialty) => (
+                          <Badge 
+                            key={specialty.id} 
+                            variant="secondary"
+                            className={`text-xs ${
+                              isFromJson 
+                                ? 'bg-facets-purple/10 text-facets-purple hover:bg-facets-purple/20' 
+                                : 'bg-facets-teal/10 text-facets-teal hover:bg-facets-teal/20'
+                            }`}
+                          >
+                            {specialty.name}
+                          </Badge>
+                        ))
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          General Practice
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Summary Stats */}
-            {displayVets.length > 0 && (
-              <Card className="mt-6 gradient-facets/5 border-0">
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-facets-purple">{displayVets.length}</div>
-                      <div className="text-sm text-muted-foreground">Total Veterinarians</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-facets-teal">
-                        {displayVets.reduce((acc, vet) => acc + (vet.specialties?.length || 0), 0)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Specialties</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-facets-purple">
-                        {new Set(displayVets.flatMap(vet => vet.specialties?.map(s => s.name) || [])).size}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Unique Specialties</div>
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Vet ID: {vet.id}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isFromJson 
+                          ? 'bg-facets-purple/10 text-facets-purple' 
+                          : 'bg-facets-teal/10 text-facets-teal'
+                      }`}>
+                        Available
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </>
-        )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Pagination for Paged View */}
+      {viewMode === 'paged' && vets && vets.totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+            disabled={vets.first}
+            className="hover:bg-facets-teal/10 hover:border-facets-teal"
+          >
+            Previous
+          </Button>
+          
+          <span className="px-4 py-2 text-sm text-gray-600">
+            Page {vets.page + 1} of {vets.totalPages}
+          </span>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(Math.min(vets.totalPages - 1, currentPage + 1))}
+            disabled={vets.last}
+            className="hover:bg-facets-teal/10 hover:border-facets-teal"
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
+      {/* Info message for merged data */}
+      {dataSource === 'merged' && additionalVetsCount > 0 && (
+        <div className="mt-8">
+          <Alert className="border-orange-200 bg-orange-50">
+            <Merge className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+                             Showing merged data: {totalVets - additionalVetsCount} vets from database + {additionalVetsCount} from JSON file. 
+               Vets with ID &gt; 1000 are loaded from the JSON file.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
     </div>
   );
 } 

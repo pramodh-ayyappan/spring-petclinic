@@ -1,0 +1,108 @@
+{
+  "additionalVets": [
+    {
+      "id": 1001,
+      "firstName": "Sarah",
+      "lastName": "Connor",
+      "specialties": [
+        {
+          "id": 101,
+          "name": "Emergency Medicine"
+        }
+      ]
+    },
+    {
+      "id": 1002,
+      "firstName": "Michael",
+      "lastName": "Chen",
+      "specialties": [
+        {
+          "id": 102,
+          "name": "Exotic Animals"
+        },
+        {
+          "id": 103,
+          "name": "Behavior Therapy"
+        }
+      ]
+    },
+    {
+      "id": 1003,
+      "firstName": "Emily",
+      "lastName": "Rodriguez",
+      "specialties": [
+        {
+          "id": 104,
+          "name": "Orthopedic Surgery"
+        }
+      ]
+    },
+    {
+      "id": 1004,
+      "firstName": "David",
+      "lastName": "Thompson",
+      "specialties": [
+        {
+          "id": 105,
+          "name": "Cardiology"
+        },
+        {
+          "id": 106,
+          "name": "Internal Medicine"
+        }
+      ]
+    },
+    {
+      "id": 1005,
+      "firstName": "Lisa",
+      "lastName": "Wang",
+      "specialties": [
+        {
+          "id": 107,
+          "name": "Oncology"
+        }
+      ]
+    },
+    {
+      "id": 1006,
+      "firstName": "Robert",
+      "lastName": "Johnson",
+      "specialties": [
+        {
+          "id": 108,
+          "name": "Dermatology"
+        },
+        {
+          "id": 109,
+          "name": "Allergy Treatment"
+        }
+      ]
+    },
+    {
+      "id": 1007,
+      "firstName": "Maria",
+      "lastName": "Garcia",
+      "specialties": [
+        {
+          "id": 110,
+          "name": "Ophthalmology"
+        }
+      ]
+    },
+    {
+      "id": 1008,
+      "firstName": "James",
+      "lastName": "Wilson",
+      "specialties": [
+        {
+          "id": 111,
+          "name": "Neurology"
+        },
+        {
+          "id": 112,
+          "name": "Critical Care"
+        }
+      ]
+    }
+  ]
+} 

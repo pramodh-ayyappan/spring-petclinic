@@ -45,12 +45,15 @@ class VetController {
 
 	private final VetRepository vetRepository;
 
+	private final VetMergeService vetMergeService;
+
 	private final S3Service s3Service;
 
 	private final ObjectMapper objectMapper;
 
-	public VetController(VetRepository vetRepository, S3Service s3Service) {
+	public VetController(VetRepository vetRepository, VetMergeService vetMergeService, S3Service s3Service) {
 		this.vetRepository = vetRepository;
+		this.vetMergeService = vetMergeService;
 		this.s3Service = s3Service;
 		this.objectMapper = new ObjectMapper();
 		// Register the JavaTimeModule to handle Java 8 date/time types
@@ -82,7 +85,8 @@ class VetController {
 	private Page<Vet> findPaginated(int page) {
 		int pageSize = 5;
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
-		return vetRepository.findAll(pageable);
+		// Use merged data for the web interface
+		return vetMergeService.findAllMerged(pageable);
 	}
 
 	@GetMapping({ "/vets" })
@@ -90,7 +94,8 @@ class VetController {
 		// Here we are returning an object of type 'Vets' rather than a collection of Vet
 		// objects so it is simpler for JSon/Object mapping
 		Vets vets = new Vets();
-		vets.getVetList().addAll(this.vetRepository.findAll());
+		// Use merged data for the JSON endpoint
+		vets.getVetList().addAll(this.vetMergeService.findAllMerged());
 		return vets;
 	}
 
