@@ -43,6 +43,11 @@ const Header = () => {
                 Vets
               </Button>
             </Link>
+            <Link href="/s3">
+              <Button variant="ghost" size="sm" className="hover:text-facets-purple hover:bg-facets-purple/10">
+                S3 & Export
+              </Button>
+            </Link>
           </nav>
 
           {/* Mobile menu button */}

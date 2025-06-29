@@ -26,6 +26,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -162,6 +163,93 @@ public class S3Service {
 			e.printStackTrace();
 			return new ArrayList<>();
 		}
+	}
+
+	/**
+	 * List all files in the S3 bucket with detailed metadata.
+	 * @return List of S3FileInfo with metadata
+	 */
+	public List<S3FileInfo> listFilesWithMetadata() {
+		if (!awsCredentialsValid) {
+			System.out.println("Simulating S3 list operation with metadata");
+			List<S3FileInfo> mockFiles = new ArrayList<>();
+			mockFiles.add(new S3FileInfo("mock-vets.json", 1024L, Instant.now().minusSeconds(3600)));
+			mockFiles.add(new S3FileInfo("mock-vets-backup.json", 2048L, Instant.now().minusSeconds(7200)));
+			return mockFiles;
+		}
+
+		try {
+			ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder().bucket(bucketName).build();
+
+			ListObjectsV2Response listObjectsResponse = s3Client.listObjectsV2(listObjectsRequest);
+			return listObjectsResponse.contents()
+				.stream()
+				.map(obj -> new S3FileInfo(obj.key(), obj.size(), obj.lastModified()))
+				.collect(Collectors.toList());
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return new ArrayList<>();
+		}
+	}
+
+	/**
+	 * Get S3 bucket name for reference
+	 * @return bucket name
+	 */
+	public String getBucketName() {
+		return bucketName;
+	}
+
+	/**
+	 * Check if AWS credentials are valid
+	 * @return true if credentials are valid, false if simulating
+	 */
+	public boolean isAwsCredentialsValid() {
+		return awsCredentialsValid;
+	}
+
+	/**
+	 * Simple class to hold S3 file information
+	 */
+	public static class S3FileInfo {
+
+		private String key;
+
+		private Long size;
+
+		private Instant lastModified;
+
+		public S3FileInfo(String key, Long size, Instant lastModified) {
+			this.key = key;
+			this.size = size;
+			this.lastModified = lastModified;
+		}
+
+		public String getKey() {
+			return key;
+		}
+
+		public void setKey(String key) {
+			this.key = key;
+		}
+
+		public Long getSize() {
+			return size;
+		}
+
+		public void setSize(Long size) {
+			this.size = size;
+		}
+
+		public Instant getLastModified() {
+			return lastModified;
+		}
+
+		public void setLastModified(Instant lastModified) {
+			this.lastModified = lastModified;
+		}
+
 	}
 
 }

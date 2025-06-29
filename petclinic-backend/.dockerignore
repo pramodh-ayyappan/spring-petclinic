@@ -1,0 +1,47 @@
+# Build artifacts
+target/
+!target/spring-petclinic-*.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Maven wrapper (keep for multi-stage build)
+# .mvn/
+# mvnw
+# mvnw.cmd
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test reports
+surefire-reports/
+failsafe-reports/
+
+# Spring Boot dev tools
+.springBeans
+
+# JVM crash logs
+hs_err_pid* 

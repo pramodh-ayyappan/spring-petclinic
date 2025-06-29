@@ -65,4 +65,46 @@ export interface CreateOwnerRequest {
 export interface ApiError {
   message: string;
   errors?: string[] | Record<string, string>;
+}
+
+// S3 and Export API Types
+export interface S3FileInfo {
+  key: string;
+  size: number;
+  lastModified: string; // ISO string format
+}
+
+export interface S3FilesResponse {
+  files: string[];
+  count: number;
+  bucketName?: string;
+  credentialsValid?: boolean;
+  error?: string;
+}
+
+export interface S3DetailedFilesResponse {
+  files: S3FileInfo[];
+  count: number;
+  bucketName?: string;
+  credentialsValid?: boolean;
+  error?: string;
+}
+
+export interface LocalFilesResponse {
+  files: string[];
+  count: number;
+  directory: string;
+  error?: string;
+}
+
+export interface ApiResponse {
+  success: boolean;
+  message: string;
+  data?: Record<string, any>;
+}
+
+export interface AdminInfo {
+  username: string;
+  authRequired: boolean;
+  authType: string;
 } 

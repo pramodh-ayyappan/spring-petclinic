@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Owner, Vet, PagedResponse, CreateOwnerRequest } from '@/types/api';
+import { Owner, Vet, PagedResponse, CreateOwnerRequest, S3FileInfo, S3FilesResponse, S3DetailedFilesResponse, LocalFilesResponse, ApiResponse, AdminInfo } from '@/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -103,6 +103,132 @@ export const vetApi = {
   getAdditionalOnly: async (): Promise<Vet[]> => {
     const response = await api.get<Vet[]>('/api/vets/additional');
     return response.data;
+  },
+};
+
+// Helper function to create Basic Auth header
+const createBasicAuthHeader = (username: string, password: string): string => {
+  const credentials = btoa(`${username}:${password}`);
+  return `Basic ${credentials}`;
+};
+
+// S3 API
+export const s3Api = {
+  // Get admin info
+  getAdminInfo: async (): Promise<AdminInfo> => {
+    const response = await api.get<AdminInfo>('/api/s3/admin/info');
+    return response.data;
+  },
+  // List S3 files
+  listFiles: async (): Promise<S3FilesResponse> => {
+    const response = await api.get<S3FilesResponse>('/api/s3/files');
+    return response.data;
+  },
+
+  // List S3 files with metadata
+  listFilesDetailed: async (): Promise<S3DetailedFilesResponse> => {
+    const response = await api.get<S3DetailedFilesResponse>('/api/s3/files/detailed');
+    return response.data;
+  },
+
+  // Delete S3 file
+  deleteFile: async (filename: string, username: string, password: string): Promise<ApiResponse> => {
+    const authHeader = createBasicAuthHeader(username, password);
+    const response = await api.delete<ApiResponse>(`/api/s3/files/${encodeURIComponent(filename)}`, {
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
+    return response.data;
+  },
+
+  // Upload vets to S3
+  uploadVets: async (filename: string = 'vets', source: string = 'merged', username: string, password: string): Promise<ApiResponse> => {
+    const params = new URLSearchParams({
+      filename,
+      source,
+    });
+    
+    const authHeader = createBasicAuthHeader(username, password);
+    const response = await api.post<ApiResponse>(`/api/s3/vets/upload?${params}`, {}, {
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
+    return response.data;
+  },
+
+  // Upload owners to S3
+  uploadOwners: async (filename: string = 'owners', username: string, password: string): Promise<ApiResponse> => {
+    const params = new URLSearchParams({
+      filename,
+    });
+    
+    const authHeader = createBasicAuthHeader(username, password);
+    const response = await api.post<ApiResponse>(`/api/s3/owners/upload?${params}`, {}, {
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
+    return response.data;
+  },
+
+  // Export vets to local file
+  exportVets: async (filename: string = 'vets', source: string = 'merged', uploadToS3: boolean = false, username: string, password: string): Promise<ApiResponse> => {
+    const params = new URLSearchParams({
+      filename,
+      source,
+      uploadToS3: uploadToS3.toString(),
+    });
+    
+    const authHeader = createBasicAuthHeader(username, password);
+    const response = await api.post<ApiResponse>(`/api/s3/vets/export?${params}`, {}, {
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
+    return response.data;
+  },
+
+  // Export owners to local file
+  exportOwners: async (filename: string = 'owners', uploadToS3: boolean = false, username: string, password: string): Promise<ApiResponse> => {
+    const params = new URLSearchParams({
+      filename,
+      uploadToS3: uploadToS3.toString(),
+    });
+    
+    const authHeader = createBasicAuthHeader(username, password);
+    const response = await api.post<ApiResponse>(`/api/s3/owners/export?${params}`, {}, {
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
+    return response.data;
+  },
+
+  // List local files
+  listLocalFiles: async (): Promise<LocalFilesResponse> => {
+    const response = await api.get<LocalFilesResponse>('/api/s3/files/local');
+    return response.data;
+  },
+
+  // Delete local file
+  deleteLocalFile: async (filename: string, username: string, password: string): Promise<ApiResponse> => {
+    const authHeader = createBasicAuthHeader(username, password);
+    const response = await api.delete<ApiResponse>(`/api/s3/files/local/${encodeURIComponent(filename)}`, {
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
+    return response.data;
+  },
+
+  // Download local file
+  downloadFile: async (filename: string): Promise<Blob> => {
+    const response = await api.get(`/api/s3/files/download/${encodeURIComponent(filename)}`, {
+      responseType: 'blob',
+    });
+    return response.data as Blob;
   },
 };
 
