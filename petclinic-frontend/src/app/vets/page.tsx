@@ -251,7 +251,7 @@ export default function VetsPage() {
                       <div className="text-sm text-muted-foreground">Total Specialties</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold gradient-facets bg-clip-text text-transparent">
+                      <div className="text-2xl font-bold text-facets-purple">
                         {new Set(displayVets.flatMap(vet => vet.specialties?.map(s => s.name) || [])).size}
                       </div>
                       <div className="text-sm text-muted-foreground">Unique Specialties</div>

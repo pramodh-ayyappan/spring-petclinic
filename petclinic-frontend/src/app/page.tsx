@@ -140,7 +140,7 @@ export default function Home() {
             <Card className="relative overflow-hidden">
               <div className="absolute inset-0 gradient-facets opacity-10"></div>
               <CardContent className="pt-6 relative z-10">
-                <div className="text-4xl font-bold gradient-facets bg-clip-text text-transparent mb-2">24/7</div>
+                <div className="text-4xl font-bold text-facets-teal mb-2">24/7</div>
                 <div className="text-lg font-semibold text-muted-foreground">Care Available</div>
               </CardContent>
             </Card>
@@ -162,7 +162,7 @@ export default function Home() {
               />
             </div>
             <span className="text-lg font-semibold text-foreground">
-              Powered by <span className="gradient-facets bg-clip-text text-transparent">Facets Cloud</span>
+              Powered by <span className="text-facets-teal font-bold">Facets Cloud</span>
             </span>
           </div>
           <p className="text-muted-foreground">
