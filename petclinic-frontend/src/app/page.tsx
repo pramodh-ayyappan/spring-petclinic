@@ -7,26 +7,31 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
+      <section className="py-20 px-4 relative overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 gradient-facets opacity-5"></div>
+        
+        <div className="max-w-7xl mx-auto text-center relative z-10">
           <div className="mb-8">
             {/* Facets Cloud Logo */}
             <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 p-4">
-                <Image
-                  src="/facets-cloud-icon.png"
-                  alt="Facets Cloud"
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-contain"
-                />
+              <div className="w-20 h-20 rounded-xl gradient-facets p-1">
+                <div className="w-full h-full bg-background rounded-lg flex items-center justify-center p-3">
+                  <Image
+                    src="/facets-cloud-icon.png"
+                    alt="Facets Cloud"
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
               </div>
             </div>
             
             <h1 className="text-6xl md:text-8xl font-bold text-foreground mb-4">
               PET CLINIC
             </h1>
-            <div className="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-lg mb-4">
+            <div className="inline-block gradient-facets text-white px-6 py-3 rounded-lg mb-4 shadow-lg">
               <p className="text-2xl font-semibold">Modern Pet Care Management</p>
             </div>
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
@@ -38,7 +43,7 @@ export default function Home() {
                 height={20}
                 className="object-contain"
               />
-              <span className="font-semibold">Facets Cloud</span>
+              <span className="font-semibold text-facets-teal">Facets Cloud</span>
             </div>
           </div>
           
@@ -48,12 +53,12 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link href="/owners">
-              <Button size="lg" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-facets-teal hover:bg-facets-teal/90 text-white">
                 Manage Owners
               </Button>
             </Link>
             <Link href="/vets">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto border-facets-purple text-facets-purple hover:bg-facets-purple hover:text-white">
                 View Vets
               </Button>
             </Link>
@@ -69,10 +74,10 @@ export default function Home() {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="hover:shadow-lg transition-shadow duration-300">
+            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-t-4 border-t-facets-teal">
               <CardHeader>
                 <div className="text-4xl mb-4">👥</div>
-                <CardTitle>Owner Management</CardTitle>
+                <CardTitle className="text-facets-teal">Owner Management</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
@@ -81,10 +86,10 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow duration-300">
+            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-t-4 border-t-facets-purple">
               <CardHeader>
                 <div className="text-4xl mb-4">🐾</div>
-                <CardTitle>Pet Records</CardTitle>
+                <CardTitle className="text-facets-purple">Pet Records</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
@@ -93,10 +98,10 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow duration-300">
+            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-t-4 border-t-facets-teal">
               <CardHeader>
                 <div className="text-4xl mb-4">👨‍⚕️</div>
-                <CardTitle>Vet Directory</CardTitle>
+                <CardTitle className="text-facets-teal">Vet Directory</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
@@ -109,30 +114,33 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 relative">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-foreground mb-16">
             By the Numbers
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl font-bold text-primary mb-2">1000+</div>
+            <Card className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-facets-teal opacity-5"></div>
+              <CardContent className="pt-6 relative z-10">
+                <div className="text-4xl font-bold text-facets-teal mb-2">1000+</div>
                 <div className="text-lg font-semibold text-muted-foreground">Happy Pets</div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl font-bold text-primary mb-2">50+</div>
+            <Card className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-facets-purple opacity-5"></div>
+              <CardContent className="pt-6 relative z-10">
+                <div className="text-4xl font-bold text-facets-purple mb-2">50+</div>
                 <div className="text-lg font-semibold text-muted-foreground">Vet Specialists</div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl font-bold text-primary mb-2">24/7</div>
+            <Card className="relative overflow-hidden">
+              <div className="absolute inset-0 gradient-facets opacity-10"></div>
+              <CardContent className="pt-6 relative z-10">
+                <div className="text-4xl font-bold gradient-facets bg-clip-text text-transparent mb-2">24/7</div>
                 <div className="text-lg font-semibold text-muted-foreground">Care Available</div>
               </CardContent>
             </Card>
@@ -144,15 +152,17 @@ export default function Home() {
       <footer className="py-12 px-4 bg-muted/30 border-t">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Image
-              src="/facets-cloud-icon.png"
-              alt="Facets Cloud"
-              width={32}
-              height={32}
-              className="object-contain"
-            />
+            <div className="p-2 gradient-facets rounded-lg">
+              <Image
+                src="/facets-cloud-icon.png"
+                alt="Facets Cloud"
+                width={24}
+                height={24}
+                className="object-contain"
+              />
+            </div>
             <span className="text-lg font-semibold text-foreground">
-              Powered by Facets Cloud
+              Powered by <span className="gradient-facets bg-clip-text text-transparent">Facets Cloud</span>
             </span>
           </div>
           <p className="text-muted-foreground">

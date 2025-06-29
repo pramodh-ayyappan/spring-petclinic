@@ -100,14 +100,16 @@ export default function OwnersPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Pet Owners</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Pet <span className="text-facets-teal">Owners</span>
+          </h1>
           <p className="text-lg text-muted-foreground">Manage pet owners and their information</p>
         </div>
 
         {/* Search and Create */}
-        <Card className="mb-6">
+        <Card className="mb-6 border-l-4 border-l-facets-teal">
           <CardHeader>
-            <CardTitle>Search & Manage Owners</CardTitle>
+            <CardTitle className="text-facets-teal">Search & Manage Owners</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -119,16 +121,17 @@ export default function OwnersPage() {
                     placeholder="Search by last name..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 focus:ring-facets-teal focus:border-facets-teal"
                   />
                 </div>
-                <Button type="submit">
+                <Button type="submit" className="bg-facets-teal hover:bg-facets-teal/90 text-white">
                   Search
                 </Button>
               </form>
               <Button 
                 onClick={() => setShowCreateForm(!showCreateForm)}
                 variant={showCreateForm ? "outline" : "default"}
+                className={showCreateForm ? "border-facets-purple text-facets-purple hover:bg-facets-purple hover:text-white" : "bg-facets-purple hover:bg-facets-purple/90 text-white"}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {showCreateForm ? 'Cancel' : 'Add New Owner'}
@@ -137,55 +140,62 @@ export default function OwnersPage() {
 
             {/* Create Form */}
             {showCreateForm && (
-              <Card className="mt-4 border-primary/20">
+              <Card className="mt-4 border-2 border-facets-purple/20 bg-facets-purple/5">
                 <CardHeader>
-                  <CardTitle>Create New Owner</CardTitle>
+                  <CardTitle className="text-facets-purple">Create New Owner</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleCreateOwner} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">First Name</label>
+                      <label className="text-sm font-medium text-facets-purple">First Name</label>
                       <Input
                         value={newOwner.firstName}
                         onChange={(e) => setNewOwner({...newOwner, firstName: e.target.value})}
                         required
+                        className="focus:ring-facets-purple focus:border-facets-purple"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Last Name</label>
+                      <label className="text-sm font-medium text-facets-purple">Last Name</label>
                       <Input
                         value={newOwner.lastName}
                         onChange={(e) => setNewOwner({...newOwner, lastName: e.target.value})}
                         required
+                        className="focus:ring-facets-purple focus:border-facets-purple"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Address</label>
+                      <label className="text-sm font-medium text-facets-purple">Address</label>
                       <Input
                         value={newOwner.address}
                         onChange={(e) => setNewOwner({...newOwner, address: e.target.value})}
                         required
+                        className="focus:ring-facets-purple focus:border-facets-purple"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">City</label>
+                      <label className="text-sm font-medium text-facets-purple">City</label>
                       <Input
                         value={newOwner.city}
                         onChange={(e) => setNewOwner({...newOwner, city: e.target.value})}
                         required
+                        className="focus:ring-facets-purple focus:border-facets-purple"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Telephone</label>
+                      <label className="text-sm font-medium text-facets-purple">Telephone</label>
                       <Input
                         value={newOwner.telephone}
                         onChange={(e) => setNewOwner({...newOwner, telephone: e.target.value})}
                         required
+                        className="focus:ring-facets-purple focus:border-facets-purple"
                       />
                     </div>
                     <div className="flex gap-2 md:col-span-2">
-                      <Button type="submit">Create Owner</Button>
-                      <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                      <Button type="submit" className="bg-facets-purple hover:bg-facets-purple/90 text-white">
+                        Create Owner
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)} className="border-facets-purple text-facets-purple hover:bg-facets-purple hover:text-white">
                         Cancel
                       </Button>
                     </div>
@@ -209,7 +219,7 @@ export default function OwnersPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-facets-teal"></div>
                 <p className="ml-4 text-lg">Loading owners...</p>
               </div>
             </CardContent>
@@ -219,58 +229,65 @@ export default function OwnersPage() {
             {/* Owners List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
               {owners?.content?.map((owner) => (
-                <Card key={owner.id} className="hover:shadow-lg transition-shadow">
+                <Card key={owner.id} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-l-4 border-l-facets-teal">
                   {editingOwner?.id === owner.id ? (
                     // Edit Form
                     <form onSubmit={handleUpdateOwner}>
                       <CardHeader>
-                        <CardTitle className="text-lg">Edit Owner</CardTitle>
+                        <CardTitle className="text-lg text-facets-teal">Edit Owner</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">First Name</label>
+                          <label className="text-sm font-medium text-facets-teal">First Name</label>
                           <Input
                             value={editingOwner.firstName}
                             onChange={(e) => setEditingOwner({...editingOwner, firstName: e.target.value})}
                             required
+                            className="focus:ring-facets-teal focus:border-facets-teal"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Last Name</label>
+                          <label className="text-sm font-medium text-facets-teal">Last Name</label>
                           <Input
                             value={editingOwner.lastName}
                             onChange={(e) => setEditingOwner({...editingOwner, lastName: e.target.value})}
                             required
+                            className="focus:ring-facets-teal focus:border-facets-teal"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Address</label>
+                          <label className="text-sm font-medium text-facets-teal">Address</label>
                           <Input
                             value={editingOwner.address}
                             onChange={(e) => setEditingOwner({...editingOwner, address: e.target.value})}
                             required
+                            className="focus:ring-facets-teal focus:border-facets-teal"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">City</label>
+                          <label className="text-sm font-medium text-facets-teal">City</label>
                           <Input
                             value={editingOwner.city}
                             onChange={(e) => setEditingOwner({...editingOwner, city: e.target.value})}
                             required
+                            className="focus:ring-facets-teal focus:border-facets-teal"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Telephone</label>
+                          <label className="text-sm font-medium text-facets-teal">Telephone</label>
                           <Input
                             value={editingOwner.telephone}
                             onChange={(e) => setEditingOwner({...editingOwner, telephone: e.target.value})}
                             required
+                            className="focus:ring-facets-teal focus:border-facets-teal"
                           />
                         </div>
                       </CardContent>
                       <CardFooter className="flex gap-2">
-                        <Button type="submit" size="sm">Save</Button>
-                        <Button type="button" variant="outline" size="sm" onClick={() => setEditingOwner(null)}>
+                        <Button type="submit" size="sm" className="bg-facets-teal hover:bg-facets-teal/90 text-white">
+                          Save
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => setEditingOwner(null)} className="border-facets-teal text-facets-teal hover:bg-facets-teal hover:text-white">
                           Cancel
                         </Button>
                       </CardFooter>
@@ -279,7 +296,7 @@ export default function OwnersPage() {
                     // Display Mode
                     <>
                       <CardHeader>
-                        <CardTitle className="text-lg">
+                        <CardTitle className="text-lg text-facets-teal">
                           {owner.firstName} {owner.lastName}
                         </CardTitle>
                       </CardHeader>
@@ -307,6 +324,7 @@ export default function OwnersPage() {
                           variant="outline" 
                           size="sm"
                           onClick={() => setEditingOwner(owner)}
+                          className="border-facets-teal text-facets-teal hover:bg-facets-teal hover:text-white"
                         >
                           <Edit className="h-4 w-4 mr-1" />
                           Edit
@@ -328,7 +346,7 @@ export default function OwnersPage() {
 
             {/* Pagination */}
             {owners && owners.totalPages > 1 && (
-              <Card>
+              <Card className="border-l-4 border-l-facets-purple">
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-center">
                     <p className="text-sm text-muted-foreground">
@@ -341,6 +359,7 @@ export default function OwnersPage() {
                         size="sm"
                         disabled={owners.first}
                         onClick={() => setCurrentPage(currentPage - 1)}
+                        className="border-facets-purple text-facets-purple hover:bg-facets-purple hover:text-white"
                       >
                         Previous
                       </Button>
@@ -349,6 +368,7 @@ export default function OwnersPage() {
                         size="sm"
                         disabled={owners.last}
                         onClick={() => setCurrentPage(currentPage + 1)}
+                        className="border-facets-purple text-facets-purple hover:bg-facets-purple hover:text-white"
                       >
                         Next
                       </Button>
