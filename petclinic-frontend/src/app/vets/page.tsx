@@ -161,7 +161,7 @@ export default function VetsPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold gradient-facets bg-clip-text text-transparent mb-4">
+        <h1 className="text-4xl font-bold gradient-text mb-4">
           Veterinarians Directory
         </h1>
         <p className="text-xl text-gray-600">

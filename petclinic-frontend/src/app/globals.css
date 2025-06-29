@@ -156,4 +156,14 @@
   .gradient-facets {
     background: linear-gradient(135deg, var(--facets-teal) 0%, var(--facets-purple) 100%);
   }
+  
+  /* Gradient text utility - properly configured for text gradients */
+  .gradient-text {
+    background: linear-gradient(135deg, var(--facets-teal) 0%, var(--facets-purple) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 100%;
+    background-repeat: no-repeat;
+  }
 }
