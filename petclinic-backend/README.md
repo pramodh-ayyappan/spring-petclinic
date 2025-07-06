@@ -83,6 +83,35 @@ curl -X POST http://localhost:8080/api/owners \
 
 The API is configured to accept requests from `http://localhost:3000` (frontend development server). This can be modified in the `CorsConfiguration` class.
 
+### S3 Configuration (Optional)
+
+The application supports AWS S3 integration for uploading veterinarian and owner data. To enable S3 features:
+
+1. **Set AWS credentials** (choose one method):
+   ```bash
+   # Option 1: Environment variables
+   export AWS_ACCESS_KEY_ID=your_access_key
+   export AWS_SECRET_ACCESS_KEY=your_secret_key
+   export AWS_REGION=us-east-1
+   export AWS_S3_BUCKET=your-bucket-name
+   
+   # Option 2: AWS Profile
+   export AWS_PROFILE=your-profile-name
+   export AWS_S3_BUCKET=your-bucket-name
+   ```
+
+2. **Test S3 endpoints**:
+   ```bash
+   # List S3 files
+   curl http://localhost:8080/api/s3/files
+   
+   # Upload data (requires admin auth: admin/admin123)
+   curl -X POST "http://localhost:8080/api/s3/vets/upload" \
+     -H "Authorization: Basic YWRtaW46YWRtaW4xMjM="
+   ```
+
+For detailed S3 configuration, see `S3_CONFIGURATION.md`.
+
 ### Development
 
 - **Code formatting**: Run `./mvnw spring-javaformat:apply` to format code

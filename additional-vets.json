@@ -2,12 +2,16 @@
   "additionalVets": [
     {
       "id": 1001,
-      "firstName": "Sarah",
-      "lastName": "Connor",
+      "firstName": "Emma",
+      "lastName": "Rodriguez",
       "specialties": [
         {
           "id": 101,
           "name": "Emergency Medicine"
+        },
+        {
+          "id": 102,
+          "name": "Critical Care"
         }
       ]
     },
@@ -17,64 +21,72 @@
       "lastName": "Chen",
       "specialties": [
         {
-          "id": 102,
+          "id": 103,
           "name": "Exotic Animals"
         },
         {
-          "id": 103,
-          "name": "Behavior Therapy"
+          "id": 104,
+          "name": "Avian Medicine"
         }
       ]
     },
     {
       "id": 1003,
-      "firstName": "Emily",
-      "lastName": "Rodriguez",
+      "firstName": "Sarah",
+      "lastName": "Johnson",
       "specialties": [
         {
-          "id": 104,
-          "name": "Orthopedic Surgery"
+          "id": 105,
+          "name": "Behavior Therapy"
+        },
+        {
+          "id": 106,
+          "name": "Animal Psychology"
         }
       ]
     },
     {
       "id": 1004,
       "firstName": "David",
-      "lastName": "Thompson",
+      "lastName": "Williams",
       "specialties": [
         {
-          "id": 105,
-          "name": "Cardiology"
+          "id": 107,
+          "name": "Orthopedic Surgery"
         },
         {
-          "id": 106,
-          "name": "Internal Medicine"
+          "id": 108,
+          "name": "Sports Medicine"
         }
       ]
     },
     {
       "id": 1005,
       "firstName": "Lisa",
-      "lastName": "Wang",
+      "lastName": "Thompson",
       "specialties": [
         {
-          "id": 107,
+          "id": 109,
           "name": "Oncology"
+        },
+        {
+          "id": 110,
+          "name": "Pain Management"
         }
       ]
     },
     {
       "id": 1006,
-      "firstName": "Robert",
-      "lastName": "Johnson",
+      "firstName": "James",
+      "lastName": "Brown",
       "specialties": [
         {
-          "id": 108,
-          "name": "Dermatology"
+          "id": 111,
+          "name": "Cardiology"
         },
         {
-          "id": 109,
-          "name": "Allergy Treatment"
+          "id": 112,
+          "name": "Internal Medicine"
         }
       ]
     },
@@ -84,25 +96,29 @@
       "lastName": "Garcia",
       "specialties": [
         {
-          "id": 110,
-          "name": "Ophthalmology"
+          "id": 113,
+          "name": "Dermatology"
+        },
+        {
+          "id": 114,
+          "name": "Allergies"
         }
       ]
     },
     {
       "id": 1008,
-      "firstName": "James",
-      "lastName": "Wilson",
+      "firstName": "Robert",
+      "lastName": "Davis",
       "specialties": [
         {
-          "id": 111,
+          "id": 115,
           "name": "Neurology"
         },
         {
-          "id": 112,
-          "name": "Critical Care"
+          "id": 116,
+          "name": "Rehabilitation"
         }
       ]
     }
   ]
-} 
+}

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -50,42 +51,54 @@ public class S3Service {
 		this.bucketName = bucketName;
 
 		try {
+			AwsCredentialsProvider credentialsProvider;
+
 			// Check if profile is provided
 			if (profile != null && !profile.trim().isEmpty()) {
 				System.out.println("Using AWS profile: " + profile);
-				this.s3Client = S3Client.builder()
-					.region(Region.of(region))
-					.credentialsProvider(ProfileCredentialsProvider.create(profile))
-					.build();
+				credentialsProvider = ProfileCredentialsProvider.create(profile);
 			}
 			// Check if access key and secret key are provided
 			else if (accessKey != null && !accessKey.trim().isEmpty() && secretKey != null
 					&& !secretKey.trim().isEmpty()) {
 				System.out.println("Using AWS access key and secret key");
 				AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKey, secretKey);
-				this.s3Client = S3Client.builder()
-					.region(Region.of(region))
-					.credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
-					.build();
+				credentialsProvider = StaticCredentialsProvider.create(awsCredentials);
 			}
-			// No credentials provided, use default credentials provider chain (for
-			// ECS/EC2 IAM roles)
+			// No explicit credentials provided, use default credentials provider chain
+			// This supports: Environment variables, Java system properties, Web Identity
+			// Token (IRSA),
+			// IAM roles for EC2/ECS, and credential profiles
 			else {
 				System.out.println("No explicit AWS credentials provided. Using default credentials provider chain.");
-				this.s3Client = S3Client.builder().region(Region.of(region)).build();
+				System.out.println(
+						"This supports: Environment variables, IRSA (Web Identity Token), IAM roles, and credential profiles.");
+				credentialsProvider = DefaultCredentialsProvider.create();
 			}
+
+			this.s3Client = S3Client.builder()
+				.region(Region.of(region))
+				.credentialsProvider(credentialsProvider)
+				.build();
 
 			// Test connection to verify credentials by checking if the bucket exists
 			// instead of listing all buckets which requires s3:ListAllMyBuckets
 			// permission
 			HeadBucketRequest headBucketRequest = HeadBucketRequest.builder().bucket(bucketName).build();
 			this.s3Client.headBucket(headBucketRequest);
-			System.out.println("Successfully connected to AWS S3 bucket: " + bucketName);
+			System.out.println("Successfully connected to AWS S3 bucket: " + bucketName + " using region: " + region);
 		}
 		catch (Exception e) {
 			this.awsCredentialsValid = false;
 			System.out.println("Error initializing AWS S3 client: " + e.getMessage());
-			System.out.println("S3 operations will be simulated.");
+			System.out.println("S3 operations are unavailable. Please check AWS credentials and S3 configuration.");
+
+			// Log helpful debugging information
+			System.out.println("Debug info:");
+			System.out.println("- AWS_REGION: " + System.getenv("AWS_REGION"));
+			System.out.println("- AWS_ROLE_ARN: " + System.getenv("AWS_ROLE_ARN"));
+			System.out.println("- AWS_WEB_IDENTITY_TOKEN_FILE: " + System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE"));
+			System.out.println("- S3 Bucket: " + bucketName);
 		}
 	}
 
@@ -97,8 +110,8 @@ public class S3Service {
 	 */
 	public boolean pushJsonToS3(String key, String jsonContent) {
 		if (!awsCredentialsValid) {
-			System.out.println("Simulating S3 push operation for key: " + key);
-			return true;
+			System.out.println("AWS credentials not configured. Cannot upload to S3: " + key);
+			return false;
 		}
 
 		try {
@@ -109,9 +122,11 @@ public class S3Service {
 				.build();
 
 			s3Client.putObject(putObjectRequest, RequestBody.fromString(jsonContent));
+			System.out.println("Successfully uploaded to S3: " + key);
 			return true;
 		}
 		catch (Exception e) {
+			System.out.println("Failed to upload to S3: " + key + " - " + e.getMessage());
 			e.printStackTrace();
 			return false;
 		}
@@ -124,17 +139,19 @@ public class S3Service {
 	 */
 	public boolean removeFromS3(String key) {
 		if (!awsCredentialsValid) {
-			System.out.println("Simulating S3 remove operation for key: " + key);
-			return true;
+			System.out.println("AWS credentials not configured. Cannot remove from S3: " + key);
+			return false;
 		}
 
 		try {
 			DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
 
 			s3Client.deleteObject(deleteObjectRequest);
+			System.out.println("Successfully removed from S3: " + key);
 			return true;
 		}
 		catch (Exception e) {
+			System.out.println("Failed to remove from S3: " + key + " - " + e.getMessage());
 			e.printStackTrace();
 			return false;
 		}
@@ -146,11 +163,8 @@ public class S3Service {
 	 */
 	public List<String> listFilesFromS3() {
 		if (!awsCredentialsValid) {
-			System.out.println("Simulating S3 list operation");
-			List<String> mockFiles = new ArrayList<>();
-			mockFiles.add("mock-vets.json");
-			mockFiles.add("mock-vets-backup.json");
-			return mockFiles;
+			System.out.println("AWS credentials not configured. S3 operations are unavailable.");
+			return new ArrayList<>();
 		}
 
 		try {
@@ -171,11 +185,8 @@ public class S3Service {
 	 */
 	public List<S3FileInfo> listFilesWithMetadata() {
 		if (!awsCredentialsValid) {
-			System.out.println("Simulating S3 list operation with metadata");
-			List<S3FileInfo> mockFiles = new ArrayList<>();
-			mockFiles.add(new S3FileInfo("mock-vets.json", 1024L, Instant.now().minusSeconds(3600)));
-			mockFiles.add(new S3FileInfo("mock-vets-backup.json", 2048L, Instant.now().minusSeconds(7200)));
-			return mockFiles;
+			System.out.println("AWS credentials not configured. S3 operations are unavailable.");
+			return new ArrayList<>();
 		}
 
 		try {
