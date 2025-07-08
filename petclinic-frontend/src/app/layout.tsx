@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
 export const metadata: Metadata = {
-  title: "PetClinic - Neobrutalism Edition",
-  description: "A modern pet clinic management system with neobrutalism design",
+  title: "PetClinic",
+  description: "Spring PetClinic Application",
 };
 
 export default function RootLayout({
@@ -20,9 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-inter antialiased bg-neo-gray min-h-screen`}>
+      <body className="antialiased">
         <Header />
-        <main className="min-h-screen">
+        <main className="min-h-screen bg-gray-50">
           {children}
         </main>
       </body>

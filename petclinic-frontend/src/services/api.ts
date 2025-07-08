@@ -1,235 +1,218 @@
-import axios from 'axios';
-import { Owner, Vet, PagedResponse, CreateOwnerRequest, S3FilesResponse, S3DetailedFilesResponse, LocalFilesResponse, ApiResponse, AdminInfo } from '@/types/api';
+import { Owner, Vet, PagedResponse, S3FilesResponse, LocalFilesResponse, AdminInfo, ApiResponse, VetsResponse } from '@/types/api';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// API service for petclinic application
+class ApiService {
+  
+  // Owners API
+  async getOwners(page = 0, size = 10): Promise<PagedResponse<Owner>> {
+    const response = await fetch(`/api/owners?page=${page}&size=${size}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch owners');
+    }
+    return response.json();
+  }
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Owner API
-export const ownerApi = {
-  getAll: async (page: number = 0, size: number = 10): Promise<PagedResponse<Owner>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
+  async createOwner(owner: Omit<Owner, 'id' | 'pets'>): Promise<Owner> {
+    const response = await fetch('/api/owners', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(owner),
     });
     
-    const response = await api.get<PagedResponse<Owner>>(`/api/owners?${params}`);
-    return response.data;
-  },
+    if (!response.ok) {
+      throw new Error('Failed to create owner');
+    }
+    
+    return response.json();
+  }
 
-  getById: async (id: number): Promise<Owner> => {
-    const response = await api.get<Owner>(`/api/owners/${id}`);
-    return response.data;
-  },
-
-  create: async (owner: CreateOwnerRequest): Promise<Owner> => {
-    const response = await api.post<Owner>('/api/owners', owner);
-    return response.data;
-  },
-
-  update: async (id: number, owner: CreateOwnerRequest): Promise<Owner> => {
-    const response = await api.put<Owner>(`/api/owners/${id}`, owner);
-    return response.data;
-  },
-
-  delete: async (id: number): Promise<void> => {
-    await api.delete(`/api/owners/${id}`);
-  },
-
-  search: async (lastName: string, page: number = 0, size: number = 10): Promise<PagedResponse<Owner>> => {
-    const params = new URLSearchParams({
-      lastName,
-      page: page.toString(),
-      size: size.toString(),
+  async updateOwner(id: number, owner: Omit<Owner, 'pets'>): Promise<Owner> {
+    const response = await fetch(`/api/owners/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(owner),
     });
     
-    const response = await api.get<PagedResponse<Owner>>(`/api/owners/search?${params}`);
-    return response.data;
-  },
-};
+    if (!response.ok) {
+      throw new Error('Failed to update owner');
+    }
+    
+    return response.json();
+  }
 
-// Vet API - now simplified to use backend merging
-export const vetApi = {
-  // Get paginated vets (merged data by default)
-  getAll: async (page: number = 0, size: number = 10, source: string = 'merged'): Promise<PagedResponse<Vet>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-      source: source,
+  async deleteOwner(id: number): Promise<void> {
+    const response = await fetch(`/api/owners/${id}`, {
+      method: 'DELETE',
     });
     
-    const response = await api.get<PagedResponse<Vet>>(`/api/vets?${params}`);
-    return response.data;
-  },
+    if (!response.ok) {
+      throw new Error('Failed to delete owner');
+    }
+  }
 
-  // Get all vets without pagination (merged data by default)
-  getAllVets: async (source: string = 'merged'): Promise<Vet[]> => {
-    const params = new URLSearchParams({
-      source: source,
-    });
-    
-    const response = await api.get<Vet[]>(`/api/vets/all?${params}`);
-    return response.data;
-  },
+  // Vets API
+  async getVets(page = 0, size = 10): Promise<PagedResponse<Vet>> {
+    const response = await fetch(`/api/vets?page=${page}&size=${size}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch vets');
+    }
+    return response.json();
+  }
 
-  // Get specifically merged vets (database + JSON)
-  getMerged: async (page: number = 0, size: number = 10): Promise<PagedResponse<Vet>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
-    
-    const response = await api.get<PagedResponse<Vet>>(`/api/vets/merged?${params}`);
-    return response.data;
-  },
+  async getAllVets(): Promise<VetsResponse> {
+    const response = await fetch('/api/vets/all');
+    if (!response.ok) {
+      throw new Error('Failed to fetch all vets');
+    }
+    return response.json();
+  }
 
-  // Get only database vets
-  getDatabaseOnly: async (page: number = 0, size: number = 10): Promise<PagedResponse<Vet>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
-    
-    const response = await api.get<PagedResponse<Vet>>(`/api/vets/database?${params}`);
-    return response.data;
-  },
+  // S3 API
+  async getS3Files(): Promise<S3FilesResponse> {
+    const response = await fetch('/api/s3/files');
+    if (!response.ok) {
+      throw new Error('Failed to fetch S3 files');
+    }
+    return response.json();
+  }
 
-  // Get only additional vets from JSON
-  getAdditionalOnly: async (): Promise<Vet[]> => {
-    const response = await api.get<Vet[]>('/api/vets/additional');
-    return response.data;
-  },
-};
+  async getLocalFiles(): Promise<LocalFilesResponse> {
+    const response = await fetch('/api/s3/local-files');
+    if (!response.ok) {
+      throw new Error('Failed to fetch local files');
+    }
+    return response.json();
+  }
 
-// Helper function to create Basic Auth header
-const createBasicAuthHeader = (username: string, password: string): string => {
-  const credentials = btoa(`${username}:${password}`);
-  return `Basic ${credentials}`;
-};
-
-// S3 API
-export const s3Api = {
-  // Get admin info
-  getAdminInfo: async (): Promise<AdminInfo> => {
-    const response = await api.get<AdminInfo>('/api/s3/admin/info');
-    return response.data;
-  },
-  // List S3 files
-  listFiles: async (): Promise<S3FilesResponse> => {
-    const response = await api.get<S3FilesResponse>('/api/s3/files');
-    return response.data;
-  },
-
-  // List S3 files with metadata
-  listFilesDetailed: async (): Promise<S3DetailedFilesResponse> => {
-    const response = await api.get<S3DetailedFilesResponse>('/api/s3/files/detailed');
-    return response.data;
-  },
-
-  // Delete S3 file
-  deleteFile: async (filename: string, username: string, password: string): Promise<ApiResponse> => {
-    const authHeader = createBasicAuthHeader(username, password);
-    const response = await api.delete<ApiResponse>(`/api/s3/files/${encodeURIComponent(filename)}`, {
+  async deleteS3File(filename: string, authHeader: string): Promise<ApiResponse<Record<string, unknown>>> {
+    const response = await fetch(`/api/s3/files/${filename}`, {
+      method: 'DELETE',
       headers: {
         'Authorization': authHeader,
       },
     });
-    return response.data;
-  },
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete S3 file');
+    }
+    
+    return response.json();
+  }
 
-  // Upload vets to S3
-  uploadVets: async (filename: string = 'vets', source: string = 'merged', username: string, password: string): Promise<ApiResponse> => {
+  async deleteLocalFile(filename: string, authHeader: string): Promise<ApiResponse<Record<string, unknown>>> {
+    const response = await fetch(`/api/s3/local-files/${filename}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete local file');
+    }
+    
+    return response.json();
+  }
+
+  async downloadFile(filename: string): Promise<Blob> {
+    const response = await fetch(`/api/s3/download/${filename}`);
+    if (!response.ok) {
+      throw new Error('Failed to download file');
+    }
+    return response.blob();
+  }
+
+  async exportVets(filename: string, source: string, uploadToS3: boolean, authHeader: string): Promise<ApiResponse<Record<string, unknown>>> {
     const params = new URLSearchParams({
       filename,
       source,
+      uploadToS3: uploadToS3.toString()
     });
-    
-    const authHeader = createBasicAuthHeader(username, password);
-    const response = await api.post<ApiResponse>(`/api/s3/vets/upload?${params}`, {}, {
+
+    const response = await fetch(`/api/s3/export/vets?${params}`, {
+      method: 'POST',
       headers: {
         'Authorization': authHeader,
       },
     });
-    return response.data;
-  },
+    
+    if (!response.ok) {
+      throw new Error('Failed to export vets');
+    }
+    
+    return response.json();
+  }
 
-  // Upload owners to S3
-  uploadOwners: async (filename: string = 'owners', username: string, password: string): Promise<ApiResponse> => {
+  async exportOwners(filename: string, uploadToS3: boolean, authHeader: string): Promise<ApiResponse<Record<string, unknown>>> {
     const params = new URLSearchParams({
       filename,
+      uploadToS3: uploadToS3.toString()
     });
-    
-    const authHeader = createBasicAuthHeader(username, password);
-    const response = await api.post<ApiResponse>(`/api/s3/owners/upload?${params}`, {}, {
+
+    const response = await fetch(`/api/s3/export/owners?${params}`, {
+      method: 'POST',
       headers: {
         'Authorization': authHeader,
       },
     });
-    return response.data;
-  },
+    
+    if (!response.ok) {
+      throw new Error('Failed to export owners');
+    }
+    
+    return response.json();
+  }
 
-  // Export vets to local file
-  exportVets: async (filename: string = 'vets', source: string = 'merged', uploadToS3: boolean = false, username: string, password: string): Promise<ApiResponse> => {
+  async uploadVets(filename: string, source: string, authHeader: string): Promise<ApiResponse<Record<string, unknown>>> {
     const params = new URLSearchParams({
       filename,
-      source,
-      uploadToS3: uploadToS3.toString(),
+      source
     });
-    
-    const authHeader = createBasicAuthHeader(username, password);
-    const response = await api.post<ApiResponse>(`/api/s3/vets/export?${params}`, {}, {
+
+    const response = await fetch(`/api/s3/upload/vets?${params}`, {
+      method: 'POST',
       headers: {
         'Authorization': authHeader,
       },
     });
-    return response.data;
-  },
+    
+    if (!response.ok) {
+      throw new Error('Failed to upload vets');
+    }
+    
+    return response.json();
+  }
 
-  // Export owners to local file
-  exportOwners: async (filename: string = 'owners', uploadToS3: boolean = false, username: string, password: string): Promise<ApiResponse> => {
+  async uploadOwners(filename: string, authHeader: string): Promise<ApiResponse<Record<string, unknown>>> {
     const params = new URLSearchParams({
-      filename,
-      uploadToS3: uploadToS3.toString(),
+      filename
+    });
+
+    const response = await fetch(`/api/s3/upload/owners?${params}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+      },
     });
     
-    const authHeader = createBasicAuthHeader(username, password);
-    const response = await api.post<ApiResponse>(`/api/s3/owners/export?${params}`, {}, {
-      headers: {
-        'Authorization': authHeader,
-      },
-    });
-    return response.data;
-  },
+    if (!response.ok) {
+      throw new Error('Failed to upload owners');
+    }
+    
+    return response.json();
+  }
 
-  // List local files
-  listLocalFiles: async (): Promise<LocalFilesResponse> => {
-    const response = await api.get<LocalFilesResponse>('/api/s3/files/local');
-    return response.data;
-  },
+  async getAdminInfo(): Promise<AdminInfo> {
+    const response = await fetch('/api/s3/admin/info');
+    if (!response.ok) {
+      throw new Error('Failed to fetch admin info');
+    }
+    return response.json();
+  }
+}
 
-  // Delete local file
-  deleteLocalFile: async (filename: string, username: string, password: string): Promise<ApiResponse> => {
-    const authHeader = createBasicAuthHeader(username, password);
-    const response = await api.delete<ApiResponse>(`/api/s3/files/local/${encodeURIComponent(filename)}`, {
-      headers: {
-        'Authorization': authHeader,
-      },
-    });
-    return response.data;
-  },
-
-  // Download local file
-  downloadFile: async (filename: string): Promise<Blob> => {
-    const response = await api.get(`/api/s3/files/download/${encodeURIComponent(filename)}`, {
-      responseType: 'blob',
-    });
-    return response.data as Blob;
-  },
-};
-
-export default api; 
+export const apiService = new ApiService(); 

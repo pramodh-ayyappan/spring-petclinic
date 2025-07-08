@@ -1,628 +1,551 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from 'react';
+import { apiService } from '@/services/api';
+import { S3FilesResponse, LocalFilesResponse, AdminInfo } from '@/types/api';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { s3Api } from '@/services/api';
-import { 
-  S3FilesResponse, 
-  S3DetailedFilesResponse, 
-  LocalFilesResponse,
-  S3FileInfo
-} from '@/types/api';
-import AdminAuth from '@/components/AdminAuth';
+import { AlertCircle, Upload, Download, Trash2, RefreshCw, Cloud, HardDrive, FileText } from 'lucide-react';
 
-function S3ManagementPageContent({
-  credentials,
-  showLogin,
-}: {
-  credentials: { username: string; password: string } | null;
-  showLogin: () => void;
-}) {
+export default function S3Page() {
   // State management
   const [s3Files, setS3Files] = useState<S3FilesResponse | null>(null);
-  const [s3DetailedFiles, setS3DetailedFiles] = useState<S3DetailedFilesResponse | null>(null);
   const [localFiles, setLocalFiles] = useState<LocalFilesResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [alerts, setAlerts] = useState<{ type: 'success' | 'error', message: string }[]>([]);
-  
-  // Form state
-  const [exportForms, setExportForms] = useState({
-    vetsFilename: 'vets',
-    vetsSource: 'merged',
-    vetsUploadToS3: false,
-    ownersFilename: 'owners',
-    ownersUploadToS3: false,
-    uploadVetsFilename: 'vets',
-    uploadVetsSource: 'merged',
-    uploadOwnersFilename: 'owners',
+  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts] = useState<{ type: 'success' | 'error'; message: string }[]>([]);
+
+  // Authentication state
+  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Operation state
+  const [operations, setOperations] = useState({
+    filename: 'export',
+    source: 'merged',
+    uploadToS3: false
   });
 
-  // Utility functions
   const addAlert = useCallback((type: 'success' | 'error', message: string) => {
-    setAlerts(prev => [...prev, { type, message }]);
+    const newAlert = { type, message };
+    setAlerts(prev => [...prev, newAlert]);
     setTimeout(() => {
-      setAlerts(prev => prev.slice(1));
+      setAlerts(prev => prev.filter(alert => alert !== newAlert));
     }, 5000);
   }, []);
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const getAuthHeader = useCallback(() => {
+    return `Basic ${btoa(`${credentials.username}:${credentials.password}`)}`;
+  }, [credentials.username, credentials.password]);
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  // Data loading functions
-  const loadS3Files = useCallback(async () => {
+  // Data fetching functions
+  const fetchS3Files = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await s3Api.listFiles();
-      setS3Files(response);
+      const data = await apiService.getS3Files();
+      setS3Files(data);
     } catch (error) {
-      addAlert('error', 'Failed to load S3 files');
-      console.error('Error loading S3 files:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching S3 files:', error);
+      addAlert('error', 'Failed to fetch S3 files');
     }
   }, [addAlert]);
 
-  const loadS3DetailedFiles = useCallback(async () => {
+  const fetchLocalFiles = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await s3Api.listFilesDetailed();
-      setS3DetailedFiles(response);
+      const data = await apiService.getLocalFiles();
+      setLocalFiles(data);
     } catch (error) {
-      addAlert('error', 'Failed to load detailed S3 files');
-      console.error('Error loading detailed S3 files:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching local files:', error);
+      addAlert('error', 'Failed to fetch local files');
     }
   }, [addAlert]);
 
-  const loadLocalFiles = useCallback(async () => {
+  const fetchAdminInfo = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await s3Api.listLocalFiles();
-      setLocalFiles(response);
+      const data = await apiService.getAdminInfo();
+      setAdminInfo(data);
     } catch (error) {
-      addAlert('error', 'Failed to load local files');
-      console.error('Error loading local files:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching admin info:', error);
     }
+  }, []);
+
+  const fetchAllData = useCallback(async () => {
+    setLoading(true);
+    await Promise.all([fetchS3Files(), fetchLocalFiles(), fetchAdminInfo()]);
+    setLoading(false);
+  }, [fetchS3Files, fetchLocalFiles, fetchAdminInfo]);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  // Authentication functions
+  const handleLogin = useCallback((username: string, password: string) => {
+    setCredentials({ username, password });
+    setIsAuthenticated(true);
+    addAlert('success', `Authenticated as ${username}`);
   }, [addAlert]);
 
-  // Action functions
-  const handleDeleteS3File = async (filename: string) => {
-    if (!confirm(`Are you sure you want to delete "${filename}" from S3?`)) return;
-    
+  const handleLogout = useCallback(() => {
+    setCredentials({ username: '', password: '' });
+    setIsAuthenticated(false);
+    addAlert('success', 'Logged out successfully');
+  }, [addAlert]);
+
+  // File operations
+  const handleDeleteS3File = useCallback(async (filename: string) => {
+    if (!isAuthenticated) {
+      addAlert('error', 'Authentication required');
+      return;
+    }
+
     try {
-      const response = await s3Api.deleteFile(filename, credentials!.username, credentials!.password);
-      if (response.success) {
-        addAlert('success', response.message);
-        loadS3Files();
-        loadS3DetailedFiles();
+      const result = await apiService.deleteS3File(filename, getAuthHeader());
+      if (result.success) {
+        addAlert('success', result.message);
+        await fetchS3Files();
       } else {
-        addAlert('error', response.message);
+        addAlert('error', result.message);
       }
     } catch (error) {
-      addAlert('error', 'Failed to delete S3 file');
-      console.error('Error deleting S3 file:', error);
+      addAlert('error', `Failed to delete S3 file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [isAuthenticated, getAuthHeader, addAlert, fetchS3Files]);
 
-  const handleDeleteLocalFile = async (filename: string) => {
-    if (!confirm(`Are you sure you want to delete "${filename}" from local storage?`)) return;
-    
+  const handleDeleteLocalFile = useCallback(async (filename: string) => {
+    if (!isAuthenticated) {
+      addAlert('error', 'Authentication required');
+      return;
+    }
+
     try {
-      const response = await s3Api.deleteLocalFile(filename, credentials!.username, credentials!.password);
-      if (response.success) {
-        addAlert('success', response.message);
-        loadLocalFiles();
+      const result = await apiService.deleteLocalFile(filename, getAuthHeader());
+      if (result.success) {
+        addAlert('success', result.message);
+        await fetchLocalFiles();
       } else {
-        addAlert('error', response.message);
+        addAlert('error', result.message);
       }
     } catch (error) {
-      addAlert('error', 'Failed to delete local file');
-      console.error('Error deleting local file:', error);
+      addAlert('error', `Failed to delete local file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [isAuthenticated, getAuthHeader, addAlert, fetchLocalFiles]);
 
-  const handleDownloadFile = async (filename: string) => {
+  const handleDownloadFile = useCallback(async (filename: string) => {
     try {
-      const blob = await s3Api.downloadFile(filename);
+      const blob = await apiService.downloadFile(filename);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      addAlert('success', `File "${filename}" downloaded successfully`);
+      window.URL.revokeObjectURL(url);
+      addAlert('success', `Downloaded ${filename}`);
     } catch (error) {
-      addAlert('error', 'Failed to download file');
-      console.error('Error downloading file:', error);
+      addAlert('error', `Failed to download file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [addAlert]);
 
-  const handleExportVets = async () => {
+  const handleExportVets = useCallback(async () => {
+    if (!isAuthenticated) {
+      addAlert('error', 'Authentication required');
+      return;
+    }
+
     try {
-      const response = await s3Api.exportVets(
-        exportForms.vetsFilename,
-        exportForms.vetsSource,
-        exportForms.vetsUploadToS3,
-        credentials!.username,
-        credentials!.password
+      const result = await apiService.exportVets(
+        operations.filename,
+        operations.source,
+        operations.uploadToS3,
+        getAuthHeader()
       );
-      if (response.success) {
-        addAlert('success', response.message);
-        loadLocalFiles();
-        if (exportForms.vetsUploadToS3) {
-          loadS3Files();
-          loadS3DetailedFiles();
-        }
+      
+      if (result.success) {
+        addAlert('success', result.message);
+        await fetchAllData();
       } else {
-        addAlert('error', response.message);
+        addAlert('error', result.message);
       }
     } catch (error) {
-      addAlert('error', 'Failed to export vets data');
-      console.error('Error exporting vets:', error);
+      addAlert('error', `Failed to export vets: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [isAuthenticated, operations, getAuthHeader, addAlert, fetchAllData]);
 
-  const handleExportOwners = async () => {
+  const handleExportOwners = useCallback(async () => {
+    if (!isAuthenticated) {
+      addAlert('error', 'Authentication required');
+      return;
+    }
+
     try {
-      const response = await s3Api.exportOwners(
-        exportForms.ownersFilename,
-        exportForms.ownersUploadToS3,
-        credentials!.username,
-        credentials!.password
+      const result = await apiService.exportOwners(
+        operations.filename,
+        operations.uploadToS3,
+        getAuthHeader()
       );
-      if (response.success) {
-        addAlert('success', response.message);
-        loadLocalFiles();
-        if (exportForms.ownersUploadToS3) {
-          loadS3Files();
-          loadS3DetailedFiles();
-        }
+      
+      if (result.success) {
+        addAlert('success', result.message);
+        await fetchAllData();
       } else {
-        addAlert('error', response.message);
+        addAlert('error', result.message);
       }
     } catch (error) {
-      addAlert('error', 'Failed to export owners data');
-      console.error('Error exporting owners:', error);
+      addAlert('error', `Failed to export owners: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [isAuthenticated, operations, getAuthHeader, addAlert, fetchAllData]);
 
-  const handleUploadVets = async () => {
+  const handleUploadVets = useCallback(async () => {
+    if (!isAuthenticated) {
+      addAlert('error', 'Authentication required');
+      return;
+    }
+
     try {
-      const response = await s3Api.uploadVets(
-        exportForms.uploadVetsFilename,
-        exportForms.uploadVetsSource,
-        credentials!.username,
-        credentials!.password
+      const result = await apiService.uploadVets(
+        operations.filename,
+        operations.source,
+        getAuthHeader()
       );
-      if (response.success) {
-        addAlert('success', response.message);
-        loadS3Files();
-        loadS3DetailedFiles();
+      
+      if (result.success) {
+        addAlert('success', result.message);
+        await fetchS3Files();
       } else {
-        addAlert('error', response.message);
+        addAlert('error', result.message);
       }
     } catch (error) {
-      addAlert('error', 'Failed to upload vets data');
-      console.error('Error uploading vets:', error);
+      addAlert('error', `Failed to upload vets: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [isAuthenticated, operations, getAuthHeader, addAlert, fetchS3Files]);
 
-  const handleUploadOwners = async () => {
+  const handleUploadOwners = useCallback(async () => {
+    if (!isAuthenticated) {
+      addAlert('error', 'Authentication required');
+      return;
+    }
+
     try {
-      const response = await s3Api.uploadOwners(
-        exportForms.uploadOwnersFilename,
-        credentials!.username,
-        credentials!.password
-      );
-      if (response.success) {
-        addAlert('success', response.message);
-        loadS3Files();
-        loadS3DetailedFiles();
+      const result = await apiService.uploadOwners(operations.filename, getAuthHeader());
+      
+      if (result.success) {
+        addAlert('success', result.message);
+        await fetchS3Files();
       } else {
-        addAlert('error', response.message);
+        addAlert('error', result.message);
       }
     } catch (error) {
-      addAlert('error', 'Failed to upload owners data');
-      console.error('Error uploading owners:', error);
+      addAlert('error', `Failed to upload owners: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
+  }, [isAuthenticated, operations, getAuthHeader, addAlert, fetchS3Files]);
 
-  // Load data on component mount - only if authenticated
-  useEffect(() => {
-    if (credentials) {
-      loadS3Files();
-      loadS3DetailedFiles();
-      loadLocalFiles();
-    }
-  }, [credentials, loadS3Files, loadS3DetailedFiles, loadLocalFiles]);
-
-  // Show login prompt if not authenticated
-  if (!credentials) {
+  if (loading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="mb-8 text-center">
-          <h1 className="gradient-text text-4xl font-bold mb-4">
-            S3 & Export Management
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Admin authentication required to access S3 management features
-          </p>
-          
-          <div className="max-w-md mx-auto bg-card border rounded-lg p-6 shadow-sm">
-            <div className="mb-6">
-              <div className="w-16 h-16 bg-facets-teal/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-facets-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Admin Access Required</h3>
-              <p className="text-gray-600 text-sm">
-                Please log in with your admin credentials to access S3 export and file management features.
-              </p>
-            </div>
-            
-            <Button 
-              onClick={showLogin} 
-              className="w-full bg-facets-teal hover:bg-facets-teal/90"
-            >
-              Login as Admin
-            </Button>
-          </div>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Loading S3 data...</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="gradient-text text-4xl font-bold mb-4">
-          S3 & Export Management
-        </h1>
-        <p className="text-xl text-gray-600">
-          Manage S3 uploads, local exports, and file operations for PetClinic data
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <Cloud className="h-8 w-8 mr-2 text-blue-600" />
+            S3 & Export Management
+          </h1>
+          <p className="text-gray-600 mt-2">Manage file exports and S3 uploads</p>
+        </div>
+        <Button onClick={fetchAllData} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh All
+        </Button>
       </div>
 
       {/* Alerts */}
       {alerts.map((alert, index) => (
-        <Alert key={index} className={alert.type === 'error' ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50'}>
+        <Alert key={index} className={`${alert.type === 'error' ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50'}`}>
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription className={alert.type === 'error' ? 'text-red-700' : 'text-green-700'}>
             {alert.message}
           </AlertDescription>
         </Alert>
       ))}
 
-      {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Export to Local */}
-        <Card>
+      {/* Authentication Section */}
+      {adminInfo && (
+        <Card className="border-l-4 border-l-orange-500">
           <CardHeader>
-            <CardTitle className="text-facets-teal">Export to Local Files</CardTitle>
+            <CardTitle className="text-orange-600">Admin Authentication</CardTitle>
             <CardDescription>
-              Export data to local JSON files with optional S3 backup
+              Authentication required for admin operations. Expected user: {adminInfo.username}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Vets Export */}
-            <div className="space-y-2">
-              <Label htmlFor="vets-filename">Vets Export</Label>
-              <div className="flex space-x-2">
-                <Input
-                  id="vets-filename"
-                  placeholder="Filename"
-                  value={exportForms.vetsFilename}
-                  onChange={(e) => setExportForms({...exportForms, vetsFilename: e.target.value})}
-                />
-                <select
-                  className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={exportForms.vetsSource}
-                  onChange={(e) => setExportForms({...exportForms, vetsSource: e.target.value})}
-                >
-                  <option value="merged">Merged</option>
-                  <option value="database">Database Only</option>
-                  <option value="additional">Additional Only</option>
-                </select>
+          <CardContent>
+            {!isAuthenticated ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Enter username"
+                      value={credentials.username}
+                      onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter password"
+                      value={credentials.password}
+                      onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button 
+                      onClick={() => handleLogin(credentials.username, credentials.password)}
+                      disabled={!credentials.username || !credentials.password}
+                      className="w-full bg-orange-600 hover:bg-orange-700"
+                    >
+                      Login
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="vets-upload-s3"
-                  checked={exportForms.vetsUploadToS3}
-                  onChange={(e) => setExportForms({...exportForms, vetsUploadToS3: e.target.checked})}
-                />
-                <Label htmlFor="vets-upload-s3">Also upload to S3</Label>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Badge variant="default" className="bg-green-100 text-green-800">
+                    Authenticated as {credentials.username}
+                  </Badge>
+                </div>
+                <Button onClick={handleLogout} variant="outline" size="sm">
+                  Logout
+                </Button>
               </div>
-              <Button onClick={handleExportVets} className="w-full bg-facets-teal hover:bg-facets-teal/90">
-                Export Vets
-              </Button>
-            </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-            {/* Owners Export */}
-            <div className="space-y-2">
-              <Label htmlFor="owners-filename">Owners Export</Label>
-              <Input
-                id="owners-filename"
-                placeholder="Filename"
-                value={exportForms.ownersFilename}
-                onChange={(e) => setExportForms({...exportForms, ownersFilename: e.target.value})}
-              />
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="owners-upload-s3"
-                  checked={exportForms.ownersUploadToS3}
-                  onChange={(e) => setExportForms({...exportForms, ownersUploadToS3: e.target.checked})}
-                />
-                <Label htmlFor="owners-upload-s3">Also upload to S3</Label>
+      {/* Export Operations */}
+      {isAuthenticated && (
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader>
+            <CardTitle className="text-green-600 flex items-center">
+              <FileText className="h-5 w-5 mr-2" />
+              Export Operations
+            </CardTitle>
+            <CardDescription>Export data to local files and optionally upload to S3</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="filename">Filename (base)</Label>
+                  <Input
+                    id="filename"
+                    value={operations.filename}
+                    onChange={(e) => setOperations({ ...operations, filename: e.target.value })}
+                    placeholder="export"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="source">Vets Source</Label>
+                  <select
+                    id="source"
+                    value={operations.source}
+                    onChange={(e) => setOperations({ ...operations, source: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="merged">Merged (DB + JSON)</option>
+                    <option value="database">Database Only</option>
+                    <option value="additional">JSON File Only</option>
+                  </select>
+                </div>
+                <div className="flex items-center space-x-2 pt-6">
+                  <input
+                    type="checkbox"
+                    id="uploadToS3"
+                    checked={operations.uploadToS3}
+                    onChange={(e) => setOperations({ ...operations, uploadToS3: e.target.checked })}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <Label htmlFor="uploadToS3">Also upload to S3</Label>
+                </div>
               </div>
-              <Button onClick={handleExportOwners} className="w-full bg-facets-purple hover:bg-facets-purple/90">
-                Export Owners
-              </Button>
+              <div className="flex space-x-2">
+                <Button onClick={handleExportVets} className="bg-green-600 hover:bg-green-700">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Export Vets
+                </Button>
+                <Button onClick={handleExportOwners} className="bg-blue-600 hover:bg-blue-700">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Export Owners
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* Upload to S3 Only */}
-        <Card>
+      {/* S3 Upload Operations */}
+      {isAuthenticated && (
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader>
-            <CardTitle className="text-facets-purple">Upload to S3</CardTitle>
-            <CardDescription>
-              Upload data directly to S3 without local files
-            </CardDescription>
+            <CardTitle className="text-blue-600 flex items-center">
+              <Upload className="h-5 w-5 mr-2" />
+              S3 Upload Operations
+            </CardTitle>
+            <CardDescription>Direct upload to S3 without local file creation</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Vets Upload */}
-            <div className="space-y-2">
-              <Label htmlFor="upload-vets-filename">Vets Upload</Label>
-              <div className="flex space-x-2">
-                <Input
-                  id="upload-vets-filename"
-                  placeholder="Filename"
-                  value={exportForms.uploadVetsFilename}
-                  onChange={(e) => setExportForms({...exportForms, uploadVetsFilename: e.target.value})}
-                />
-                <select
-                  className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={exportForms.uploadVetsSource}
-                  onChange={(e) => setExportForms({...exportForms, uploadVetsSource: e.target.value})}
-                >
-                  <option value="merged">Merged</option>
-                  <option value="database">Database Only</option>
-                  <option value="additional">Additional Only</option>
-                </select>
-              </div>
-              <Button onClick={handleUploadVets} className="w-full bg-facets-teal hover:bg-facets-teal/90">
+          <CardContent>
+            <div className="flex space-x-2">
+              <Button onClick={handleUploadVets} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
+                <Upload className="h-4 w-4 mr-2" />
                 Upload Vets to S3
               </Button>
-            </div>
-
-            {/* Owners Upload */}
-            <div className="space-y-2">
-              <Label htmlFor="upload-owners-filename">Owners Upload</Label>
-              <Input
-                id="upload-owners-filename"
-                placeholder="Filename"
-                value={exportForms.uploadOwnersFilename}
-                onChange={(e) => setExportForms({...exportForms, uploadOwnersFilename: e.target.value})}
-              />
-              <Button onClick={handleUploadOwners} className="w-full bg-facets-purple hover:bg-facets-purple/90">
+              <Button onClick={handleUploadOwners} variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
+                <Upload className="h-4 w-4 mr-2" />
                 Upload Owners to S3
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
 
-      {/* File Management Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* S3 Files */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-facets-teal">S3 Files</CardTitle>
-              <CardDescription>
-                Files stored in S3 bucket
-                {s3Files?.bucketName && (
-                  <span className="ml-2">
-                    <Badge variant="outline" className="text-facets-teal border-facets-teal">
-                      {s3Files.bucketName}
-                    </Badge>
-                  </span>
-                )}
-                {s3Files && !s3Files.credentialsValid && (
-                  <span className="ml-2">
-                    <Badge variant="outline" className="text-orange-600 border-orange-600">
-                      Simulated
-                    </Badge>
-                  </span>
-                )}
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                loadS3Files();
-                loadS3DetailedFiles();
-              }}
-              disabled={loading}
-            >
-              Refresh
-            </Button>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center">
+                <Cloud className="h-5 w-5 mr-2 text-blue-600" />
+                S3 Files
+              </span>
+              <Button onClick={fetchS3Files} size="sm" variant="outline">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </CardTitle>
+            <CardDescription>
+              {s3Files ? (
+                <>
+                  {s3Files.credentialsValid ? (
+                    `${s3Files.count} files in bucket: ${s3Files.bucketName}`
+                  ) : (
+                    'S3 credentials not configured'
+                  )}
+                </>
+              ) : (
+                'Loading...'
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {s3DetailedFiles && s3DetailedFiles.files.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>File</TableHead>
-                    <TableHead>Size</TableHead>
-                    <TableHead>Modified</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {s3DetailedFiles.files.map((file: S3FileInfo) => (
-                    <TableRow key={file.key}>
-                      <TableCell className="font-medium">{file.key}</TableCell>
-                      <TableCell>{formatFileSize(file.size)}</TableCell>
-                      <TableCell>{formatDate(file.lastModified)}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteS3File(file.key)}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            {s3Files?.error ? (
+              <Alert className="border-red-500 bg-red-50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-red-700">{s3Files.error}</AlertDescription>
+              </Alert>
+            ) : s3Files?.files.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No files found in S3 bucket
+              </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">
-                {loading ? 'Loading...' : 'No S3 files found'}
-              </p>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {s3Files?.files.map((filename) => (
+                  <div key={filename} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm font-medium truncate flex-1">{filename}</span>
+                    <div className="flex space-x-2 ml-2">
+                      <Button
+                        onClick={() => handleDeleteS3File(filename)}
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 hover:text-red-800"
+                        disabled={!isAuthenticated}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
 
         {/* Local Files */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-facets-purple">Local Files</CardTitle>
-              <CardDescription>
-                Exported files in local directory
-                {localFiles?.directory && (
-                  <span className="block text-xs mt-1 font-mono text-gray-600">
-                    {localFiles.directory}
-                  </span>
-                )}
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={loadLocalFiles}
-              disabled={loading}
-            >
-              Refresh
-            </Button>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center">
+                <HardDrive className="h-5 w-5 mr-2 text-green-600" />
+                Local Export Files
+              </span>
+              <Button onClick={fetchLocalFiles} size="sm" variant="outline">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </CardTitle>
+            <CardDescription>
+              {localFiles ? (
+                `${localFiles.count} files in: ${localFiles.directory}`
+              ) : (
+                'Loading...'
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {localFiles && localFiles.files.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>File</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {localFiles.files.map((filename: string) => (
-                    <TableRow key={filename}>
-                      <TableCell className="font-medium">{filename}</TableCell>
-                      <TableCell className="space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadFile(filename)}
-                        >
-                          Download
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteLocalFile(filename)}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            {localFiles?.error ? (
+              <Alert className="border-red-500 bg-red-50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-red-700">{localFiles.error}</AlertDescription>
+              </Alert>
+            ) : localFiles?.files.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No local export files found
+              </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">
-                {loading ? 'Loading...' : 'No local files found'}
-              </p>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {localFiles?.files.map((filename) => (
+                  <div key={filename} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm font-medium truncate flex-1">{filename}</span>
+                    <div className="flex space-x-2 ml-2">
+                      <Button
+                        onClick={() => handleDownloadFile(filename)}
+                        size="sm"
+                        variant="outline"
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteLocalFile(filename)}
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 hover:text-red-800"
+                        disabled={!isAuthenticated}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Summary Stats */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-facets-teal">
-                {s3Files?.count || 0}
-              </div>
-              <div className="text-sm text-gray-600">S3 Files</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-facets-purple">
-                {localFiles?.count || 0}
-              </div>
-              <div className="text-sm text-gray-600">Local Files</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-600">
-                {s3DetailedFiles?.files.reduce((acc, file) => acc + file.size, 0) 
-                  ? formatFileSize(s3DetailedFiles.files.reduce((acc, file) => acc + file.size, 0))
-                  : '0 Bytes'
-                }
-              </div>
-              <div className="text-sm text-gray-600">S3 Storage Used</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
-  );
-}
-
-export default function S3ManagementPage() {
-  return (
-    <AdminAuth>
-      {(credentials, showLogin) => (
-        <S3ManagementPageContent credentials={credentials} showLogin={showLogin} />
-      )}
-    </AdminAuth>
   );
 } 

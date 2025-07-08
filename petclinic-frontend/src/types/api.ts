@@ -1,7 +1,14 @@
-// API Types for PetClinic Backend
+// Base entity types
+export interface BaseEntity {
+  id?: number;
+}
 
-export interface Owner {
-  id: number;
+export interface NamedEntity extends BaseEntity {
+  name: string;
+}
+
+// Owner and Pet related types
+export interface Owner extends BaseEntity {
   firstName: string;
   lastName: string;
   address: string;
@@ -10,48 +17,21 @@ export interface Owner {
   pets?: Pet[];
 }
 
-export interface Pet {
-  id: number;
+export interface Pet extends BaseEntity {
   name: string;
   birthDate: string;
   type: PetType;
-  ownerId?: number;
+  owner: Owner;
   visits?: Visit[];
 }
 
-export interface PetType {
-  id: number;
-  name: string;
-}
+// PetType inherits id and name from NamedEntity
+export type PetType = NamedEntity;
 
-export interface Visit {
-  id: number;
+export interface Visit extends BaseEntity {
   date: string;
   description: string;
-  petId?: number;
-}
-
-export interface Vet {
-  id: number;
-  firstName: string;
-  lastName: string;
-  specialties?: Specialty[];
-}
-
-export interface Specialty {
-  id: number;
-  name: string;
-}
-
-export interface PagedResponse<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
-  number: number;
+  pet: Pet;
 }
 
 export interface CreateOwnerRequest {
@@ -62,28 +42,36 @@ export interface CreateOwnerRequest {
   telephone: string;
 }
 
-export interface ApiError {
-  message: string;
-  errors?: string[] | Record<string, string>;
+// Vet related types
+// Specialty inherits id and name from NamedEntity
+export type Specialty = NamedEntity;
+
+export interface Vet extends BaseEntity {
+  firstName: string;
+  lastName: string;
+  specialties?: Specialty[];
 }
 
-// S3 and Export API Types
-export interface S3FileInfo {
-  key: string;
+// API Response types
+export interface PagedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
   size: number;
-  lastModified: string; // ISO string format
+  number: number;
+  first: boolean;
+  last: boolean;
 }
 
+export interface ApiResponse<T> {
+  data?: T;
+  success: boolean;
+  message: string;
+}
+
+// S3 related types
 export interface S3FilesResponse {
   files: string[];
-  count: number;
-  bucketName?: string;
-  credentialsValid?: boolean;
-  error?: string;
-}
-
-export interface S3DetailedFilesResponse {
-  files: S3FileInfo[];
   count: number;
   bucketName?: string;
   credentialsValid?: boolean;
@@ -97,14 +85,61 @@ export interface LocalFilesResponse {
   error?: string;
 }
 
-export interface ApiResponse {
-  success: boolean;
-  message: string;
-  data?: Record<string, unknown>;
-}
-
 export interface AdminInfo {
   username: string;
   authRequired: boolean;
   authType: string;
+}
+
+// API Configuration types
+export interface ApiConfig {
+  apiUrl: string;
+  baseUrl: string;
+  mode: 'development' | 'production' | 'kubernetes';
+  timestamp: string;
+  features: {
+    s3Enabled: boolean;
+    adminEnabled: boolean;
+    exportEnabled: boolean;
+  };
+}
+
+// Error types
+export interface ApiError {
+  message: string;
+  status: number;
+  details?: unknown;
+}
+
+export interface AxiosError {
+  response?: {
+    data?: {
+      error?: string;
+      message?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+}
+
+// Data source information for vets
+export interface VetDataSource {
+  type: 'merged' | 'database' | 'additional';
+  counts: {
+    total: number;
+    database: number;
+    additional: number;
+    merged: number;
+  };
+  sources: {
+    database: boolean;
+    additionalJson: boolean;
+    merged: boolean;
+  };
+  description: string;
+}
+
+export interface VetsResponse {
+  vets: Vet[];
+  dataSource: VetDataSource;
 } 

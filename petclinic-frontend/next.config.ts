@@ -11,7 +11,8 @@ const nextConfig: NextConfig = {
   
   // Configure environment variables
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+    // For Kubernetes deployment, use relative URL so it uses same domain
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/',
   },
 };
 

@@ -37,7 +37,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  */
 @RestController
 @RequestMapping("/api/s3")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(originPatterns = "*") // Allow requests from any origin for Kubernetes
 public class S3ApiController {
 
 	private final S3Service s3Service;

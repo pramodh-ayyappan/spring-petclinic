@@ -22,7 +22,7 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/api/owners")
-@CrossOrigin(origins = "http://localhost:3000") // Allow requests from React app
+@CrossOrigin(originPatterns = "*") // Allow requests from any origin for Kubernetes
 public class OwnerApiController {
 
 	private final OwnerRepository ownerRepository;

@@ -1,4 +1,5 @@
-# Multi-stage build for Spring Boot application with optimized dependency caching
+# syntax=docker/dockerfile:1
+# Fast build Dockerfile with BuildKit cache mounts - most reliable approach
 FROM eclipse-temurin:17-jdk-jammy AS builder
 
 WORKDIR /app
@@ -11,18 +12,18 @@ RUN chmod +x mvnw
 # Copy only pom.xml first to leverage Docker layer caching for dependencies
 COPY pom.xml ./
 
-# Download dependencies in a separate layer (this will be cached if pom.xml doesn't change)
-# Use multiple strategies to ensure all dependencies are downloaded
-RUN ./mvnw dependency:go-offline -B && \
-    ./mvnw dependency:resolve -B && \
-    ./mvnw dependency:resolve-sources -B
+# Download dependencies with cache mount (BuildKit feature)
+# This mounts the Maven repository cache between builds - most reliable approach
+RUN --mount=type=cache,target=/root/.m2 \
+    ./mvnw dependency:go-offline -B
 
 # Copy source code
 COPY src src
 
-# Build the application (dependencies should be cached now)
-# Remove -o flag to avoid offline mode issues
-RUN ./mvnw clean package -DskipTests -B
+# Build the application with cache mount
+# This ensures Maven can access the cached dependencies
+RUN --mount=type=cache,target=/root/.m2 \
+    ./mvnw clean package -DskipTests -B
 
 # Runtime stage with optimized JRE
 FROM eclipse-temurin:17-jre-jammy
@@ -51,4 +52,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 EXPOSE 8080
 
 # Use exec form and optimize JVM settings for containers
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"] 

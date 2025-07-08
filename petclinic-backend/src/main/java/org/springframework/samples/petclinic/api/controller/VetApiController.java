@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/vets")
-@CrossOrigin(origins = "http://localhost:3000") // Allow requests from React app
+@CrossOrigin(originPatterns = "*") // Allow requests from any origin for Kubernetes
 public class VetApiController {
 
 	private final VetRepository vetRepository;

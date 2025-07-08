@@ -62,6 +62,11 @@ export default function Home() {
                 View Vets
               </Button>
             </Link>
+            <Link href="/s3">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
+                S3 Management
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -73,7 +78,7 @@ export default function Home() {
             Features That Make a Difference
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-t-4 border-t-facets-teal">
               <CardHeader>
                 <div className="text-4xl mb-4">👥</div>
@@ -106,6 +111,18 @@ export default function Home() {
               <CardContent>
                 <p className="text-muted-foreground">
                   Manage your veterinary team with specialties and schedules. Professional care made simple.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-t-4 border-t-blue-600">
+              <CardHeader>
+                <div className="text-4xl mb-4">☁️</div>
+                <CardTitle className="text-blue-600">S3 & File Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Upload, export, and manage files with integrated S3 storage and local file handling capabilities.
                 </p>
               </CardContent>
             </Card>
