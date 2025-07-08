@@ -164,7 +164,10 @@ public class S3ApiController {
 			}
 
 			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-			String finalFilename = filename + "_" + source + "_" + timestamp + ".json";
+			// Always include "vets" in the filename for clarity
+			String baseFilename = filename.equals("export") ? "export_vets"
+					: (filename.contains("vets") ? filename : filename + "_vets");
+			String finalFilename = baseFilename + "_" + source + "_" + timestamp + ".json";
 
 			String jsonContent = objectMapper.writeValueAsString(vets);
 			boolean success = s3Service.pushJsonToS3(finalFilename, jsonContent);
@@ -200,7 +203,10 @@ public class S3ApiController {
 			owners.getOwnerList().addAll(ownerRepository.findAll());
 
 			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-			String finalFilename = filename + "_" + timestamp + ".json";
+			// Always include "owners" in the filename for clarity
+			String baseFilename = filename.equals("export") ? "export_owners"
+					: (filename.contains("owners") ? filename : filename + "_owners");
+			String finalFilename = baseFilename + "_" + timestamp + ".json";
 
 			String jsonContent = objectMapper.writeValueAsString(owners);
 			boolean success = s3Service.pushJsonToS3(finalFilename, jsonContent);
@@ -256,7 +262,10 @@ public class S3ApiController {
 
 			// Generate filename with timestamp
 			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-			String finalFilename = filename + "_" + source + "_" + timestamp + ".json";
+			// Always include "vets" in the filename for clarity
+			String baseFilename = filename.equals("export") ? "export_vets"
+					: (filename.contains("vets") ? filename : filename + "_vets");
+			String finalFilename = baseFilename + "_" + source + "_" + timestamp + ".json";
 			Path filePath = exportPath.resolve(finalFilename);
 
 			// Write to local file
@@ -306,7 +315,10 @@ public class S3ApiController {
 
 			// Generate filename with timestamp
 			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-			String finalFilename = filename + "_" + timestamp + ".json";
+			// Always include "owners" in the filename for clarity
+			String baseFilename = filename.equals("export") ? "export_owners"
+					: (filename.contains("owners") ? filename : filename + "_owners");
+			String finalFilename = baseFilename + "_" + timestamp + ".json";
 			Path filePath = exportPath.resolve(finalFilename);
 
 			// Write to local file
